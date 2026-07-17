@@ -1,0 +1,221 @@
+I. Practical Deployment: Complete RAG Code for 2026
+1.1 Environment Preparation
+# Core Dependencies
+pip install langchain==0.2.0 langchain-community==0.2.0 langchain-openai==0.1.0
+# Embedding/Vector Database Dependencies
+pip install sentence-transformers==3.0.1 pinecone-client==3.2.0 chromadb==0.5.3
+# Preprocessing/Reranking Dependencies
+pip install unstructured==0.14.0 pypdf2==3.0.1 rank_bm25==0.2.2 cross-encoder==0.5.0
+# Other Dependencies
+pip install python-dotenv==1.0.1 requests==2.31.0 tqdm==4.66.4
+
+Configure the .env file (replace keys):
+PENAI_API_KEY=Your API Key
+OPENAI_MODEL=gpt-4-turbo-2024-04-09
+PINECONE_API_KEY=Your API Key
+PINECONE_ENV=us-east-1
+PINECONE_INDEX=rag-knowledge-base-2026
+EMBEDDING_MODEL=bge-m3
+EMBEDDING_DIM=1024
+SIMILARITY_THRESHOLD=0.7
+TOP_K=5
+
+1.2 Complete Code Implementation (Modular)
+import os
+import time
+import torch
+import numpy as np
+from dotenv import load_dotenv
+from tqdm import tqdm
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.embeddings import HuggingFaceEmbeddings
+from langchain.vectorstores import Pinecone
+from langchain.chat_models import ChatOpenAI
+from langchain.chains import RetrievalQA
+from langchain.prompts import PromptTemplate
+from langchain.retrievers import ContextualCompressionRetriever
+from langchain.retrievers.document_compressors import CrossEncoderReranker
+from pinecone import Pinecone, ServerlessSpec
+from sentence_transformers import SentenceTransformer
+from rank_bm25 import BM25Okapi
+from unstructured.partition.pdf import partition_pdf
+from langchain.schema import Document
+
+# Load environment variables
+load_dotenv()
+
+# Global configuration (mainstream settings for 2026, reusable)
+embedding_model_name = os.getenv("EMBEDDING_MODEL")
+embedding_dim = int(os.getenv("EMBEDDING_DIM"))
+pinecone_api_key = os.getenv("PINECONE_API_KEY")
+pinecone_env = os.getenv("PINECONE_ENV")
+pinecone_index_name = os.getenv("PINECONE_INDEX")
+similarity_threshold = float(os.getenv("SIMILARITY_THRESHOLD"))
+top_k = int(os.getenv("TOP_K"))
+openai_api_key = os.getenv("OPENAI_API_KEY")
+openai_model = os.getenv("OPENAI_MODEL")
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
+# 1. Data Preprocessing (including semantic deduplication & metadata labeling)
+def load_and_process_data(file_path: str = "./data/rag_2026.pdf"):
+    # Parse PDF and extract plain text
+    elements = partition_pdf(filename=file_path)
+    raw_text = "\n".join([str(el) for el in elements if hasattr(el, "text")])
+    
+    # Text segmentation (50-150 words per chunk)
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=120, chunk_overlap=20, separators=["\n", ".", "。", "!", "？"]
+    )
+    texts = text_splitter.split_text(raw_text)
+    
+    # Noise filtering: remove empty & ultra-short text segments
+    texts = [t.strip() for t in texts if t.strip() and len(t.strip()) >= 20]
+    
+    # Semantic deduplication powered by BGE-M3 embedding model
+    embedding_model = SentenceTransformer(embedding_model_name, device=device)
+    embeddings = embedding_model.encode(texts, convert_to_tensor=False)
+    unique_texts, unique_embeddings = [], []
+    for text, emb in zip(texts, embeddings):
+        if not unique_embeddings or np.max(np.dot(unique_embeddings, emb)/(np.linalg.norm(unique_embeddings, axis=1)*np.linalg.norm(emb))) < 0.9:
+            unique_texts.append(text)
+            unique_embeddings.append(emb)
+    
+    # Metadata tagging for each text chunk
+    metadatas = [{"source": "2026 RAG Engineering Practice Handbook", "time": "2026-06-01", "category": "RAG Principles & Optimization"} for _ in unique_texts]
+    return unique_texts, metadatas
+
+# 2. Build Vector Knowledge Base (supports incremental update)
+def build_knowledge_base(texts, metadatas):
+    embeddings = HuggingFaceEmbeddings(
+        model_name=embedding_model_name, model_kwargs={"device": device}, encode_kwargs={"normalize_embeddings": True}
+    )
+    pc = Pinecone(api_key=pinecone_api_key)
+    
+    # Auto create Pinecone index for new users
+    if pinecone_index_name not in pc.list_indexes().names():
+        pc.create_index(
+            name=pinecone_index_name, dimension=embedding_dim, metric="cosine",
+            spec=ServerlessSpec(cloud="aws", region=pinecone_env)
+        )
+        time.sleep(10)
+    
+    # Initialize vector store, support incremental data insertion
+    vector_store = Pinecone.from_texts(texts=texts, embedding=embeddings, metadatas=metadatas, index_name=pinecone_index_name)
+    print("Knowledge base construction completed!")
+    return vector_store
+
+# 3. Hybrid Retriever (Dense Vector + BM25 Keyword + Cross-Encoder Reranking)
+def build_hybrid_retriever(vector_store):
+    # Dense vector retriever with similarity threshold filter
+    vector_retriever = vector_store.as_retriever(search_kwargs={"k": top_k*2, "score_threshold": similarity_threshold})
+    
+    # BM25 keyword retriever to fix missing relevant documents
+    all_texts = [doc.page_content for doc in vector_store.similarity_search("test", k=1000)]
+    tokenized_texts = [t.split() for t in all_texts]
+    bm25 = BM25Okapi(tokenized_texts)
+    
+    def bm25_retriever(query, k=top_k*2):
+        tokenized_query = query.split()
+        doc_scores = bm25.get_scores(tokenized_query)
+        top_indices = np.argsort(doc_scores)[::-1][:k]
+        return [Document(page_content=all_texts[i], metadata={"source": "BM25 Keyword Retrieval"}) for i in top_indices if doc_scores[i] > 0]
+    
+    # Hybrid retrieval logic: merge results & remove duplicate chunks
+    def hybrid_retrieve(query, k=top_k*2):
+        vector_res = vector_retriever.get_relevant_documents(query)
+        bm25_res = bm25_retriever(query, k=k)
+        combined = vector_res + bm25_res
+        unique_res, seen = [], set()
+        for doc in combined:
+            if doc.page_content not in seen:
+                seen.add(doc.page_content)
+                unique_res.append(doc)
+        return unique_res[:k]
+    
+    # Cross-BERT semantic reranking module
+    reranker = CrossEncoderReranker(model_name="cross-encoder/ms-marco-MiniLM-L-6-v2", top_n=top_k)
+    compression_retriever = ContextualCompressionRetriever(base_retriever=hybrid_retrieve, base_compressor=reranker)
+    print("Hybrid retriever construction completed!")
+    return compression_retriever
+
+# 4. RAG Generation Chain (hallucination suppression + source citation)
+def build_rag_chain(retriever):
+    prompt_template = """### System Prompt
+You are a professional RAG QA assistant. You must strictly follow the rules below:
+1. All answers must be fully based on retrieved context; do NOT fabricate or guess any information.
+2. If no relevant context is found, directly reply: "Sorry, no relevant information was retrieved to answer your question."
+3. Write answers concisely with bullet points, cite sources after each conclusion (Format: Source: XXX).
+4. Automatically verify consistency between your answer and retrieved context to eliminate hallucinations.
+
+### Retrieved Context
+{context}
+
+### User Question
+{question}
+
+### Your Answer"""
+    
+    PROMPT = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
+    llm = ChatOpenAI(model_name=openai_model, api_key=openai_api_key, temperature=0.2, max_tokens=1024)
+    rag_chain = RetrievalQA.from_chain_type(
+        llm=llm, chain_type="stuff", retriever=retriever, chain_type_kwargs={"prompt": PROMPT}, return_source_documents=True
+    )
+    print("RAG generation chain construction completed!")
+    return rag_chain
+
+# 5. Closed-loop Feedback & Incremental Knowledge Update
+def feedback_and_update(rag_chain, query, feedback: str, vector_store):
+    global similarity_threshold, top_k
+    if feedback == "inaccurate":
+        # Adjust retrieval hyperparameters for low-quality results
+        similarity_threshold = max(0.5, similarity_threshold - 0.1)
+        top_k = min(10, top_k + 2)
+        retriever = build_hybrid_retriever(vector_store)
+        rag_chain = build_rag_chain(retriever)
+    elif feedback == "no_info":
+        # Incrementally insert new knowledge into vector database
+        new_text = input("Please input new knowledge content:")
+        new_metadata = {"source": input("Please input source info:"), "time": time.strftime("%Y-%m-%d"), "category": "RAG Principles & Optimization"}
+        embeddings = HuggingFaceEmbeddings(model_name=embedding_model_name, model_kwargs={"device": device})
+        vector_store.add_texts(texts=[new_text], metadatas=[new_metadata], embedding=embeddings)
+        print("Incremental knowledge update finished!")
+    return rag_chain
+
+# Main Program (End-to-end full pipeline)
+def main():
+    texts, metadatas = load_and_process_data()
+    vector_store = build_knowledge_base(texts, metadatas)
+    retriever = build_hybrid_retriever(vector_store)
+    rag_chain = build_rag_chain(retriever)
+    
+    print("\n===== RAG System Launched, type 'quit' to exit =====")
+    while True:
+        user_query = input("\nPlease enter your question (about RAG principles & optimization):")
+        if user_query.lower() == "quit":
+            print("System exited!")
+            break
+        
+        result = rag_chain({"query": user_query})
+        print("\n===== Generated Answer =====")
+        print(result["result"])
+        
+        # Print retrieved source chunks
+        print("\n===== Retrieved Reference Sources =====")
+        for i, doc in enumerate(result["source_documents"]):
+            print(f"{i+1}. Source: {doc.metadata.get('source', 'Unknown')}, Fragment: {doc.page_content[:100]}...")
+        
+        # Collect user feedback on answer quality
+        feedback = input("\nRate the answer (accurate / inaccurate / no_info):")
+        while feedback not in ["accurate", "inaccurate", "no_info"]:
+            feedback = input("Invalid input, please re-enter rating:")
+        rag_chain = feedback_and_update(rag_chain, user_query, feedback, vector_store)
+
+if __name__ == "__main__":
+    main()
+
+1.3 Operation Instructions
+1.3.1 Operation Steps
+A. Create a new 'data' folder and place the RAG-related PDF (named rag_2026.pdf) in it;
+B. Configure the .env file and replace the API key (Pinecone offers free tier);
+C. Save the code as rag_2026_demo.py and run it in the terminal with 'python rag_2026_demo.py' to start.
+
