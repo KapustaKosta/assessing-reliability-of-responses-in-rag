@@ -1,0 +1,31 @@
+{
+  "input_file": "C:\\Users\\kosti\\Documents\\assessing-reliability-of-responses-in-rag\\data.csv",
+  "seed": 42,
+  "initial_rows": 2245,
+  "exact_duplicates_removed": 8,
+  "conflicting_annotation_rows_quarantined": 8,
+  "rows_without_substantive_question_quarantined": 199,
+  "main_rows": 2030,
+  "dialog_groups": 1940,
+  "selected_validation_fold": 3,
+  "selected_test_fold": 5,
+  "split_optimization_score": 0.0026377344754786717,
+  "split_counts": {
+    "train": 1450,
+    "val": 290,
+    "test": 290
+  },
+  "group_leakage_detected": false,
+  "notes": [
+    "Different answers for the same full_dialog are retained.",
+    "All rows sharing the same normalized full_dialog are assigned to one split.",
+    "Rows without a substantive client request are quarantined rather than permanently discarded.",
+    "Markers are not used as model inputs and are retained only as metadata/partial supervision."
+  ],
+  "中文说明": [
+    "同一 full_dialog 下的不同回答会被保留。",
+    "具有相同标准化 full_dialog 的所有行会被分配到同一个数据划分。",
+    "缺少实质性客户请求的行会被隔离，而不是永久删除。",
+    "markers 不作为模型输入，仅作为元数据或部分辅助监督保留。"
+  ]
+}
