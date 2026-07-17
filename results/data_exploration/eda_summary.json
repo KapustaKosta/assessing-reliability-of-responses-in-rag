@@ -1,0 +1,39 @@
+{
+  "selected_columns": {
+    "question": "question",
+    "answer": "answer",
+    "context": "chunk_1",
+    "faithfulness": "binary_faithfulness",
+    "relevancy": "binary_relevancy",
+    "reliability": "joint_label",
+    "identifier": null
+  },
+  "split_sizes": {
+    "train": 1450,
+    "validation": 290,
+    "test": 290
+  },
+  "exact_duplicate_rows": {
+    "train": 0,
+    "validation": 0,
+    "test": 0
+  },
+  "label_columns_detected": [
+    "faithfulness",
+    "relevancy",
+    "reliability"
+  ],
+  "signature_columns": [
+    "question",
+    "answer",
+    "__combined_context"
+  ],
+  "context_note": "The context is stored across multiple chunk columns (chunk_1 … chunk_5; chunk_6–8 optional). MANUAL_COLUMNS['context'] = 'chunk_1' was used as the primary identifier. The build_combined_context() helper concatenates all available chunks for text-length analysis and cross-split overlap checking.",
+  "train_joint_label_counts": {
+    "faithfulness_0_relevancy_0": 166,
+    "faithfulness_0_relevancy_1": 225,
+    "faithfulness_1_relevancy_0": 17,
+    "faithfulness_1_relevancy_1": 1042
+  },
+  "reliability_label_mismatch_count": 0
+}
