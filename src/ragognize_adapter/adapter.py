@@ -14,6 +14,8 @@ from typing import Optional, Literal
 
 from datasets import load_dataset, Dataset, DatasetDict
 
+from .parsing_helpers import parse_annotation_result
+
 
 # =============================================================================
 # Data Classes
@@ -34,7 +36,7 @@ class ModelResponse:
     model_name: str
     output: str
     hallucinations: list[HallucinationSpan] = field(default_factory=list)
-    addressed_user_prompt: bool = True
+    addressed_user_prompt: str = "missing"   # "true", "false", "missing", "invalid"
     all_valid: bool = True
     cluelessness: bool = False
     completely_hallucinated: bool = False
@@ -191,26 +193,22 @@ class RAGognizeAdapter:
         response_data: dict,
     ) -> ModelResponse:
         """Parse a single model response."""
-        # Get hallucination spans
         hallucination_list = response_data.get("hallucinations", [])
         hallucinations = self._parse_hallucinations(hallucination_list)
-        
-        # Get details if available
-        details = response_data.get("details", {})
-        result = details.get("result", {})
-        
-        # Also check top-level output
         output = response_data.get("text", "") or response_data.get("output", "")
-        
+
+        ann = parse_annotation_result(response_data)
+
         return ModelResponse(
             model_name=model_name,
             output=output,
             hallucinations=hallucinations,
-            addressed_user_prompt=result.get("addressed_user_prompt", True),
-            all_valid=result.get("all_valid", True),
-            cluelessness=result.get("cluelessness", False),
-            completely_hallucinated=result.get("completely_hallucinated", False),
-            answerable=response_data.get("answerable", details.get("answerable", True)),
+            addressed_user_prompt=ann.addressed_user_prompt,
+            all_valid=ann.all_valid,
+            cluelessness=ann.cluelessness,
+            completely_hallucinated=ann.completely_hallucinated,
+            answerable=response_data.get("answerable",
+                                        response_data.get("details", {}).get("answerable", True)),
         )
     
     def _parse_documents(self, documents: list) -> list[str]:

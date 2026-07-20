@@ -32,8 +32,10 @@ from datetime import datetime, timezone
 ENV_PYTHON = "/Users/chengyi/opt/miniconda3/envs/rag-reliability/bin/python"
 assert sys.executable == ENV_PYTHON, f"Must use {ENV_PYTHON}, got {sys.executable}"
 
-# Add src to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+# Add project root and src to path
+PROJECT_ROOT = os.path.join(os.path.dirname(__file__), '..', '..')
+sys.path.insert(0, PROJECT_ROOT)
+sys.path.insert(0, os.path.join(PROJECT_ROOT, 'src'))
 
 # ============================================================================
 # IMPORTS
@@ -46,6 +48,7 @@ from ragognize_adapter import (
     RAGognizeAdapter, load_ragognize_dataset,
     create_train_val_split, apply_split, AVAILABLE_MODELS,
 )
+from ragognize_adapter.parsing_helpers import parse_annotation_result
 from nli_faithfulness import (
     DEFAULT_MODEL_NAME, CACHE_DIR, RESULTS_DIR,
     segment_dataset,
@@ -272,33 +275,93 @@ def main():
     print(f"  Unfaithful (0): {n_unfaithful}")
     
     # -------------------------------------------------------------------------
-    # 4. ADDRESSED_USER_PROMPT AUDIT
+    # 4. ADDRESSED_USER_PROMPT AUDIT (correct nested path)
     # -------------------------------------------------------------------------
     print("\n" + "=" * 70)
     print("4. ADDRESSED_USER_PROMPT AUDIT")
     print("=" * 70)
-    
-    addressed_count = 0
-    for d in val_list:
-        responses = d.get('responses', {})
+
+    total_valid_responses = 0
+    addressed_true = 0
+    addressed_false = 0
+    addressed_missing = 0
+    addressed_invalid = 0
+    source_missing_per_model = {m: 0 for m in AVAILABLE_MODELS}
+
+    per_model_relevance = {m: {"total": 0, "true": 0, "false": 0, "missing": 0, "invalid": 0}
+                           for m in AVAILABLE_MODELS}
+
+    # Read from raw_split (unified['val'] has already discarded 'responses')
+    for item in raw_split["val"]:
+        responses = item.get("responses", {})
         for model_name in AVAILABLE_MODELS:
-            if model_name in responses:
-                resp = responses[model_name]
-                details = resp.get('details', {})
-                result = details.get('result', {})
-                if 'addressed_user_prompt' in result:
-                    addressed_count += 1
-                break
-    
-    print(f"\n  addressed_user_prompt available: {addressed_count}/{len(val_list)}")
-    print(f"  Relevance: NOT AVAILABLE" if addressed_count == 0 else f"  Relevance: AVAILABLE")
-    print(f"  Reliability: NOT AVAILABLE (awaiting Relevance)")
-    
+            if model_name not in responses:
+                source_missing_per_model[model_name] += 1
+                continue
+
+            total_valid_responses += 1
+            ann = parse_annotation_result(responses[model_name])
+            cat = ann.addressed_user_prompt
+
+            per_model_relevance[model_name]["total"] += 1
+            if cat == "true":
+                addressed_true += 1
+                per_model_relevance[model_name]["true"] += 1
+            elif cat == "false":
+                addressed_false += 1
+                per_model_relevance[model_name]["false"] += 1
+            elif cat == "missing":
+                addressed_missing += 1
+                per_model_relevance[model_name]["missing"] += 1
+            else:
+                addressed_invalid += 1
+                per_model_relevance[model_name]["invalid"] += 1
+
+    available = addressed_true + addressed_false
+    missing_or_invalid = addressed_missing + addressed_invalid
+    n_val_questions = len(split_info["val_indices"])
+    n_theoretical_slots = n_val_questions * len(AVAILABLE_MODELS)
+    n_source_missing = sum(source_missing_per_model.values())
+
+    print(f"\n  Extraction path: details.annotations.result.addressed_user_prompt")
+    print(f"  Val questions: {n_val_questions}")
+    print(f"  Models per question: {len(AVAILABLE_MODELS)}")
+    print(f"  Theoretical slots: {n_theoretical_slots}")
+    print(f"  Source-missing slots: {n_source_missing}")
+    print(f"  Source-missing per model: {dict(source_missing_per_model)}")
+    print(f"  Actual valid responses: {total_valid_responses}")
+    print(f"  Invariant: {n_theoretical_slots} = {n_source_missing} + {total_valid_responses} → {n_theoretical_slots == n_source_missing + total_valid_responses}")
+    print(f"  Overall addressed_user_prompt:")
+    print(f"    true={addressed_true}, false={addressed_false}, missing={addressed_missing}, invalid={addressed_invalid}")
+    print(f"    available (true+false)={available}")
+    print(f"    Invariant: available({available}) + missing({missing_or_invalid}) == total({total_valid_responses}) → {available + missing_or_invalid == total_valid_responses}")
+    print(f"  Per source_model:")
+
+    for model_name in AVAILABLE_MODELS:
+        mc = per_model_relevance[model_name]
+        sm = source_missing_per_model[model_name]
+        tot = mc["total"] + sm
+        print(f"    {model_name}: theoretical={tot}, source_missing={sm}, valid={mc['total']}, "
+              f"true={mc['true']}, false={mc['false']}, missing={mc['missing']}, invalid={mc['invalid']}")
+
     relevance_audit = {
-        "addressed_user_prompt_available": addressed_count,
-        "total_samples": len(val_list),
-        "availability_rate": addressed_count / len(val_list) if len(val_list) > 0 else 0,
-        "note": "Relevance formal evaluation NOT AVAILABLE. addressed_user_prompt field missing from all samples."
+        "extraction_path": "details.annotations.result.addressed_user_prompt",
+        "total_valid_responses": total_valid_responses,
+        "addressed_true": addressed_true,
+        "addressed_false": addressed_false,
+        "addressed_missing": addressed_missing,
+        "addressed_invalid": addressed_invalid,
+        "available": available,
+        "missing_or_invalid": missing_or_invalid,
+        "per_source_model": {
+            m: {**per_model_relevance[m], "source_missing": source_missing_per_model[m]}
+            for m in AVAILABLE_MODELS
+        },
+        "note": (
+            "addressed_user_prompt is a GOLD relevance label extracted from the source dataset. "
+            "Recovering it does NOT mean a relevance classifier has been implemented. "
+            "Relevance prediction/model: NOT_AVAILABLE."
+        ),
     }
     
     # -------------------------------------------------------------------------
@@ -571,15 +634,18 @@ def main():
     print("=" * 70)
     
     skipped = []
-    
-    # Source data missing (none in this case)
-    if len(missing_case_ids) > 0:
-        for cid in missing_case_ids:
-            skipped.append({
-                "case_id": cid,
-                "reason": "source_data_missing",
-                "timestamp": datetime.now().isoformat(),
-            })
+
+    # Source-missing records (valid input but no response in source dataset)
+    for item in raw_split["val"]:
+        responses = item.get("responses", {})
+        for model_name in AVAILABLE_MODELS:
+            if model_name not in responses:
+                skipped.append({
+                    "question_id": item.get("user_prompt_index", -1),
+                    "source_model": model_name,
+                    "missing_reason": "source_data_missing",
+                    "timestamp": datetime.now().isoformat(),
+                })
     
     # Empty claims
     for cid in empty_claim_samples:
@@ -629,11 +695,14 @@ def main():
         "split": {
             "val_size": split_info["val_size"],
             "seed": split_info["seed"],
-            "n_val_questions": len(split_info["val_indices"]),
-            "n_theoretical_slots": len(pred_df),
-            "n_source_missing": 0,
+            "n_val_questions": n_val_questions,
+            "n_models": len(AVAILABLE_MODELS),
+            "n_theoretical_slots": n_theoretical_slots,
+            "n_source_missing": n_source_missing,
             "n_runtime_skipped": len(skipped),
-            "n_actual_valid": len(pred_df),
+            "n_actual_valid": total_valid_responses,
+            "source_missing_per_model": source_missing_per_model,
+            "invariant": f"{n_theoretical_slots} = {n_source_missing} + {total_valid_responses}",
         },
         
         "model": {

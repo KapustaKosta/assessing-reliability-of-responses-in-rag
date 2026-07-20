@@ -31,6 +31,7 @@ from ragognize_adapter import (
     RAGognizeAdapter, load_ragognize_dataset,
     create_train_val_split, apply_split, AVAILABLE_MODELS,
 )
+from ragognize_adapter.parsing_helpers import parse_annotation_result
 from nli_faithfulness import (
     DEFAULT_MODEL_NAME, CACHE_DIR, RESULTS_DIR,
     segment_dataset,
@@ -186,38 +187,95 @@ def main():
     print(f"  Faithful (1):   {n_faithful}")
     
     # =========================================================================
-    # 2. Check addressed_user_prompt in RAGognize
+    # 2. ADDRESSED_USER_PROMPT AUDIT
     # =========================================================================
     print("\n" + "=" * 70)
-    print("2. RAGOGNIZE addressed_user_prompt AUDIT")
+    print("2. ADDRESSED_USER_PROMPT AUDIT (correct path: details.annotations.result)")
     print("=" * 70)
-    
-    # Check if addressed_user_prompt exists in details.result
-    addressed_vals = []
-    addressed_dist = defaultdict(int)
-    
-    for d in val_list:
-        responses = d.get('responses', {})
+
+    # Audit from raw split (unified only has one model per sample)
+    raw_val = raw_split["val"]
+    total_valid_responses = 0
+    total_addressed_true = 0
+    total_addressed_false = 0
+    total_addressed_missing = 0
+    total_addressed_invalid = 0
+
+    per_model_counts = {m: {"total": 0, "true": 0, "false": 0, "missing": 0, "invalid": 0}
+                        for m in AVAILABLE_MODELS}
+
+    # Track source-missing per model
+    per_model_missing_slots = {m: 0 for m in AVAILABLE_MODELS}
+
+    for item in raw_val:
+        responses = item.get("responses", {})
         for model_name in AVAILABLE_MODELS:
-            if model_name in responses:
-                resp = responses[model_name]
-                details = resp.get('details', {})
-                result = details.get('result', {})
-                addr = result.get('addressed_user_prompt')
-                if addr is not None:
-                    addressed_vals.append(addr)
-                    addressed_dist[addr] += 1
-    
-    print(f"\naddressed_user_prompt in details.result:")
-    print(f"  Total samples with field: {len(addressed_vals)}/{len(val_list)}")
-    print(f"  Distribution: {dict(addressed_dist)}")
-    
-    if addressed_dist:
-        print("\n  ** Relevance gold label availability: PARTIAL **")
-        print("  Cannot claim Relevance evaluation is complete until all samples have this field.")
+            if model_name not in responses:
+                per_model_missing_slots[model_name] += 1
+                continue
+
+            total_valid_responses += 1
+            ann = parse_annotation_result(responses[model_name])
+            cat = ann.addressed_user_prompt
+
+            per_model_counts[model_name]["total"] += 1
+            if cat == "true":
+                total_addressed_true += 1
+                per_model_counts[model_name]["true"] += 1
+            elif cat == "false":
+                total_addressed_false += 1
+                per_model_counts[model_name]["false"] += 1
+            elif cat == "missing":
+                total_addressed_missing += 1
+                per_model_counts[model_name]["missing"] += 1
+            else:
+                total_addressed_invalid += 1
+                per_model_counts[model_name]["invalid"] += 1
+
+    available = total_addressed_true + total_addressed_false
+    missing = total_addressed_missing + total_addressed_invalid
+
+    print(f"\n  Extraction path: details.annotations.result.addressed_user_prompt")
+    print(f"  Total valid response slots: {total_valid_responses}")
+    print(f"  Overall:")
+    print(f"    addressed_true:    {total_addressed_true}")
+    print(f"    addressed_false:   {total_addressed_false}")
+    print(f"    addressed_missing: {total_addressed_missing}")
+    print(f"    addressed_invalid: {total_addressed_invalid}")
+    print(f"    available (=true+false): {available}")
+    print(f"    total_valid_responses:     {total_valid_responses}")
+    print(f"  Invariant check: available({available}) + missing({missing}) == total({total_valid_responses}) → {available + missing == total_valid_responses}")
+    print(f"  Per source_model:")
+
+    for model_name in AVAILABLE_MODELS:
+        mc = per_model_counts[model_name]
+        missing_slots = per_model_missing_slots[model_name]
+        tot = mc["total"] + missing_slots
+        print(f"    {model_name}:")
+        print(f"      theoretical slots={tot}, source_missing={missing_slots}, valid_responses={mc['total']}")
+        print(f"      true={mc['true']}, false={mc['false']}, missing={mc['missing']}, invalid={mc['invalid']}")
+
+    if available == total_valid_responses:
+        print(f"\n  ** All {total_valid_responses} responses have addressed_user_prompt **")
+    elif available > 0:
+        print(f"\n  ** PARTIAL availability: {available}/{total_valid_responses} **")
     else:
-        print("\n  ** Relevance gold label: NOT AVAILABLE **")
-        print("  Relevance evaluation cannot be performed on this dataset version.")
+        print(f"\n  ** ZERO availability — check extraction path! **")
+
+    relevance_audit_audit_section = {
+        "extraction_path": "details.annotations.result.addressed_user_prompt",
+        "total_valid_responses": total_valid_responses,
+        "addressed_true": total_addressed_true,
+        "addressed_false": total_addressed_false,
+        "addressed_missing": total_addressed_missing,
+        "addressed_invalid": total_addressed_invalid,
+        "available": available,
+        "missing_or_invalid": missing,
+        "per_source_model": {
+            m: {**per_model_counts[m], "source_missing": per_model_missing_slots[m]}
+            for m in AVAILABLE_MODELS
+        },
+    }
     
     # =========================================================================
     # 3. Segmentation
@@ -527,12 +585,7 @@ def main():
         },
         "strategy_comparison": strategy_results,
         "subgroup_results": subgroup_results,
-        "addressed_user_prompt_audit": {
-            "total_with_field": len(addressed_vals),
-            "total_samples": len(val_list),
-            "distribution": dict(addressed_dist),
-            "note": "Relevance evaluation NOT complete - addressed_user_prompt not fully available",
-        },
+        "addressed_user_prompt_audit": relevance_audit_audit_section,
         "inference_time_seconds": infer_time,
     }
     

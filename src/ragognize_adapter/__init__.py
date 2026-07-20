@@ -20,6 +20,12 @@ from .adapter import (
     create_train_val_split,
     apply_split,
 )
+from .parsing_helpers import (
+    parse_annotation_result,
+    parse_addressed_user_prompt,
+    AnnotationResult,
+    AddressedPromptValue,
+)
 
 __all__ = [
     "RAGognizeAdapter",
@@ -36,4 +42,8 @@ __all__ = [
     "test_reproducibility",
     "create_train_val_split",
     "apply_split",
+    "parse_annotation_result",
+    "parse_addressed_user_prompt",
+    "AnnotationResult",
+    "AddressedPromptValue",
 ]
