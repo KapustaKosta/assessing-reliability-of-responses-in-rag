@@ -1,8 +1,10 @@
 """
-NLI-based Faithfulness Detection for RAG Reliability Assessment.
+NLI-based Faithfulness and Relevance Detection for RAG Reliability Assessment.
 
-This package implements sentence-level evidence-aware NLI methods to detect
-whether RAG-generated answers are faithful to the retrieved context chunks.
+This package implements claim-level encoder/NLI methods to detect:
+- Faithfulness: Whether claims are supported by retrieved context
+- Relevance: Whether claims address the user's question
+- Reliability: faithful AND relevant
 """
 
 from .constants import (
@@ -12,45 +14,46 @@ from .constants import (
     DEVICE_PREFERENCE,
     CACHE_DIR,
     RESULTS_DIR,
+    DEFAULT_WINDOW_OVERLAP_TOKENS,
+    MIN_WINDOW_TOKENS,
+    MAX_CHUNK_WINDOWS_PER_CHUNK,
 )
-from .data import load_dataset, load_split
-from .segmentation import split_answer_into_units
-from .inference import NLIModel, batch_inference
+
+from .segmentation import split_answer_into_units, segment_dataset, AnswerSegments, ClaimUnit
+from .inference import NLIModel, batch_inference, ChunkWindow, NLIScore
 from .aggregation import (
-    aggregate_whole_answer_max_entail,
-    aggregate_whole_answer_entail_minus_contrad,
-    aggregate_sentence_min_support,
-    aggregate_sentence_fraction_supported,
-    aggregate_sentence_support_with_contradiction_penalty,
-    AGGREGATION_STRATEGIES,
-)
-from .evaluation import (
-    compute_metrics,
-    find_best_threshold,
-    evaluate_subgroups,
-    compare_with_tfidf,
+    apply_faithfulness_strategy,
+    apply_relevance_strategy,
+    compute_reliability,
+    FAITHFULNESS_STRATEGIES,
+    RELEVANCE_STRATEGIES,
 )
 
 __all__ = [
+    # Constants
     "CHUNK_COLUMNS",
     "DEFAULT_MODEL_NAME",
     "LARGE_MODEL_NAME",
     "DEVICE_PREFERENCE",
     "CACHE_DIR",
     "RESULTS_DIR",
-    "load_dataset",
-    "load_split",
+    "DEFAULT_WINDOW_OVERLAP_TOKENS",
+    "MIN_WINDOW_TOKENS",
+    "MAX_CHUNK_WINDOWS_PER_CHUNK",
+    # Segmentation
     "split_answer_into_units",
+    "segment_dataset",
+    "AnswerSegments",
+    "ClaimUnit",
+    # Inference
     "NLIModel",
     "batch_inference",
-    "aggregate_whole_answer_max_entail",
-    "aggregate_whole_answer_entail_minus_contrad",
-    "aggregate_sentence_min_support",
-    "aggregate_sentence_fraction_supported",
-    "aggregate_sentence_support_with_contradiction_penalty",
-    "AGGREGATION_STRATEGIES",
-    "compute_metrics",
-    "find_best_threshold",
-    "evaluate_subgroups",
-    "compare_with_tfidf",
+    "ChunkWindow",
+    "NLIScore",
+    # Aggregation
+    "apply_faithfulness_strategy",
+    "apply_relevance_strategy",
+    "compute_reliability",
+    "FAITHFULNESS_STRATEGIES",
+    "RELEVANCE_STRATEGIES",
 ]

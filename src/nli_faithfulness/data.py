@@ -38,7 +38,8 @@ class SampleData:
     answer: str
     binary_faithfulness: bool
     binary_relevancy: bool
-    joint_label: str  # "{relevancy}_{faithfulness}"
+    question: str = ""  # User's question
+    joint_label: str = ""  # "{relevancy}_{faithfulness}"
     chunks: list[ChunkData] = field(default_factory=list)
     
     @property

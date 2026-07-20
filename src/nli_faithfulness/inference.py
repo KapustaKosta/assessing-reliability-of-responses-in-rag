@@ -1,8 +1,8 @@
 """
-NLI inference module for Faithfulness detection.
+NLI inference module for Faithfulness and Relevance detection.
 
 Handles model loading, tokenizer-aware chunk windowing, batch inference,
-and caching of results.
+and caching of results for both faithfulness and relevance NLI tasks.
 """
 
 from __future__ import annotations
@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import logging
 import time
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from pathlib import Path
 from typing import Optional
 
@@ -26,9 +26,6 @@ from .constants import (
     DEFAULT_WINDOW_OVERLAP_TOKENS,
     MIN_WINDOW_TOKENS,
     MAX_CHUNK_WINDOWS_PER_CHUNK,
-    NLI_ENTAILMENT,
-    NLI_NEUTRAL,
-    NLI_CONTRADICTION,
 )
 
 
@@ -37,32 +34,58 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ChunkWindow:
-    """Represents a window within a chunk for NLI inference."""
+    """
+    Represents a window within a chunk for NLI inference.
+    
+    Includes token range information for debugging and verification.
+    """
     case_id: str
     chunk_id: int
     window_id: int
     window_text: str
+    token_start: int  # Start token index in original chunk
+    token_end: int    # End token index in original chunk
     token_count: int
     was_truncated: bool = False
+    doc_source: str = ""  # Source document/chunk identifier
 
 
 @dataclass
 class NLIScore:
-    """Single NLI inference result."""
+    """
+    Single NLI inference result for Faithfulness or Relevance detection.
+    
+    Faithfulness: premise = context window, hypothesis = claim
+    Relevance: premise = question, hypothesis = claim
+    """
     case_id: str
-    sentence_id: int
+    claim_id: int  # 0-indexed claim within answer
+    claim_text: str  # The claim text
     chunk_id: int
     window_id: int
-    premise: str  # chunk window text
-    hypothesis: str  # sentence text
-    p_entailment: float
-    p_neutral: float
-    p_contradiction: float
-    predicted_label: str  # entailment, neutral, or contradiction
+    
+    # NLI probabilities (from model.config.id2label)
+    entailment_probability: float
+    neutral_probability: float
+    contradiction_probability: float
+    
+    # Aggregated claim-level score
+    claim_faithfulness_score: float = 0.0
+    claim_relevance_score: float = 0.0
+    
+    # Predictions
+    faithfulness_prediction: int = 0
+    relevance_prediction: int = 0
+    
+    # For tracking
+    task_type: str = "faithfulness"  # "faithfulness" or "relevance"
+    premise: str = ""  # context window or question
+    hypothesis: str = ""  # claim text
     
     def __post_init__(self):
-        # Validate probabilities sum to ~1
-        total = self.p_entailment + self.p_neutral + self.p_contradiction
+        total = (self.entailment_probability + 
+                  self.neutral_probability + 
+                  self.contradiction_probability)
         if abs(total - 1.0) > 0.01:
             logger.warning(
                 f"Probabilities sum to {total:.4f}, expected ~1.0 for case {self.case_id}"
@@ -70,7 +93,13 @@ class NLIScore:
 
 
 class NLIModel:
-    """Wrapper for NLI model with dynamic label mapping."""
+    """
+    Wrapper for NLI model with dynamic label mapping.
+    
+    Supports both:
+    - Faithfulness NLI: premise = context window, hypothesis = claim
+    - Relevance NLI: premise = question, hypothesis = claim
+    """
     
     def __init__(
         self,
@@ -108,7 +137,7 @@ class NLIModel:
         
         # Cache for model info
         self.model_info_cache = self.cache_dir / "model_info.json"
-        
+    
     def _get_best_device(self) -> str:
         """Select the best available device."""
         for device_type in DEVICE_PREFERENCE:
@@ -123,14 +152,17 @@ class NLIModel:
         return "cpu"
     
     def _setup_label_mapping(self) -> None:
-        """Map our semantic NLI labels to model's actual labels."""
-        # Our target labels
+        """
+        Map our semantic NLI labels to model's actual labels.
+        
+        Label indices are read dynamically from model.config.id2label.
+        No hardcoded label order assumptions.
+        """
         self.entailment_idx = None
         self.neutral_idx = None
         self.contradiction_idx = None
         
-        # Try to find labels based on semantic meaning
-        # Model labels may be: entailment, contradiction, neutral (any order)
+        # Find labels based on semantic meaning
         for idx, label in self.id2label.items():
             label_lower = label.lower()
             if "entail" in label_lower or "support" in label_lower:
@@ -140,12 +172,12 @@ class NLIModel:
             elif "neutral" in label_lower:
                 self.neutral_idx = idx
         
-        # Fallback: assume label order is [entailment, neutral, contradiction]
-        # which is common for many NLI models
+        # Fallback with warning
         if self.entailment_idx is None:
             logger.warning(
                 f"Could not auto-detect NLI label mapping. "
-                f"Found labels: {self.id2label}. Assuming order [entailment, neutral, contradiction]."
+                f"Found labels: {self.id2label}. "
+                f"Model label order may differ from standard [entailment, neutral, contradiction]."
             )
             if len(self.id2label) >= 3:
                 self.entailment_idx = 0
@@ -154,8 +186,17 @@ class NLIModel:
             else:
                 raise ValueError(f"Model has unexpected number of labels: {len(self.id2label)}")
         
+        # Validate all indices are set
+        assert self.entailment_idx is not None, "entailment_idx is None after mapping"
+        assert self.neutral_idx is not None, "neutral_idx is None after mapping"
+        assert self.contradiction_idx is not None, "contradiction_idx is None after mapping"
+        
+        # Validate indices are distinct
+        assert len({self.entailment_idx, self.neutral_idx, self.contradiction_idx}) == 3, \
+            f"Label indices are not distinct: {self.entailment_idx}, {self.neutral_idx}, {self.contradiction_idx}"
+        
         logger.info(
-            f"NLI label mapping: "
+            f"NLI label mapping (from model.config.id2label): "
             f"entailment={self.entailment_idx} ({self.id2label[self.entailment_idx]}), "
             f"neutral={self.neutral_idx} ({self.id2label[self.neutral_idx]}), "
             f"contradiction={self.contradiction_idx} ({self.id2label[self.contradiction_idx]})"
@@ -167,7 +208,6 @@ class NLIModel:
         logger.info(f"Number of labels: {self.model.config.num_labels}")
         logger.info(f"Label mapping: {self.id2label}")
         
-        # Get max length
         if hasattr(self.tokenizer, "model_max_length"):
             logger.info(f"Tokenizer max length: {self.tokenizer.model_max_length}")
         else:
@@ -209,6 +249,8 @@ class NLIModel:
         """
         Create token-aware windows from a chunk for NLI inference.
         
+        Claims are never truncated. Uses pair truncation only_first for premise.
+        
         Args:
             chunk_text: The full chunk text
             case_id: Sample identifier
@@ -217,10 +259,8 @@ class NLIModel:
             overlap_tokens: Number of overlapping tokens between windows
             
         Returns:
-            List of ChunkWindow objects
+            List of ChunkWindow objects with token range information
         """
-        # Calculate available budget for premise (chunk)
-        # Subtract 3 for [CLS], [SEP], [SEP] tokens in most tokenizers
         budget = self.max_length - hypothesis_tokens - 3
         
         if budget <= 0:
@@ -230,7 +270,7 @@ class NLIModel:
             )
             return []
         
-        # Tokenize the chunk to get token-level boundaries
+        # Tokenize the chunk
         tokens = self.tokenizer.encode(
             chunk_text,
             add_special_tokens=False,
@@ -246,58 +286,50 @@ class NLIModel:
                 chunk_id=chunk_id,
                 window_id=0,
                 window_text=chunk_text,
+                token_start=0,
+                token_end=total_tokens,
                 token_count=total_tokens,
                 was_truncated=False,
+                doc_source=f"{case_id}_chunk_{chunk_id}",
             )]
         
-        # Need to create windows
+        # Create overlapping windows
         windows = []
         window_id = 0
         stride = budget - overlap_tokens
         
         if stride <= 0:
-            logger.warning(
-                f"Stride ({stride}) is too small for chunk {chunk_id}. "
-                f"Using minimum window size."
-            )
+            logger.warning(f"Stride ({stride}) is too small for chunk {chunk_id}.")
             stride = MIN_WINDOW_TOKENS
         
         start = 0
         while start < total_tokens and len(windows) < MAX_CHUNK_WINDOWS_PER_CHUNK:
             end = min(start + budget, total_tokens)
             
-            # Decode this window
             window_tokens = tokens[start:end]
             window_text = self.tokenizer.decode(window_tokens, skip_special_tokens=True)
             
-            # Check if we truncated the end
             was_truncated = end < total_tokens
-            
-            # Verify token count
-            verify_tokens = self.tokenizer.encode(
-                window_text,
-                add_special_tokens=False,
-                return_tensors="pt",
-            ).squeeze()
             
             windows.append(ChunkWindow(
                 case_id=case_id,
                 chunk_id=chunk_id,
                 window_id=window_id,
                 window_text=window_text,
-                token_count=len(verify_tokens),
+                token_start=start,
+                token_end=end,
+                token_count=len(window_tokens),
                 was_truncated=was_truncated,
+                doc_source=f"{case_id}_chunk_{chunk_id}",
             ))
             
             start += stride
             window_id += 1
         
-        # Log if we hit the limit
         if start < total_tokens:
             logger.warning(
                 f"Chunk {chunk_id} for case {case_id} has {total_tokens} tokens "
-                f"but was limited to {MAX_CHUNK_WINDOWS_PER_CHUNK} windows. "
-                f"Last {total_tokens - start} tokens not covered."
+                f"but was limited to {MAX_CHUNK_WINDOWS_PER_CHUNK} windows."
             )
         
         return windows
@@ -313,15 +345,15 @@ class NLIModel:
         Run NLI inference on premise-hypothesis pairs.
         
         Args:
-            premises: List of premise texts (chunk windows)
-            hypotheses: List of hypothesis texts (sentence units)
+            premises: List of premise texts (chunk windows or questions)
+            hypotheses: List of hypothesis texts (claims)
             batch_size: Batch size for inference
             
         Returns:
             List of NLIScore objects
         """
         if len(premises) != len(hypotheses):
-            raise ValueError(" premises and hypotheses must have the same length")
+            raise ValueError("Premises and hypotheses must have the same length")
         
         all_scores = []
         
@@ -329,7 +361,8 @@ class NLIModel:
             batch_premises = premises[i:i + batch_size]
             batch_hypotheses = hypotheses[i:i + batch_size]
             
-            # Tokenize
+            # Tokenize with truncation only on premise (first position)
+            # Claims are never truncated
             inputs = self.tokenizer(
                 batch_premises,
                 batch_hypotheses,
@@ -344,34 +377,25 @@ class NLIModel:
             outputs = self.model(**inputs)
             logits = outputs.logits
             
-            # Get probabilities
+            # Get probabilities using dynamic label indices
             probs = torch.softmax(logits, dim=-1)
             
-            # Extract scores for each class
             for j, (premise, hypothesis) in enumerate(zip(batch_premises, batch_hypotheses)):
                 p_entail = probs[j, self.entailment_idx].item()
                 p_neutral = probs[j, self.neutral_idx].item()
                 p_contrad = probs[j, self.contradiction_idx].item()
                 
-                # Determine predicted label
-                scores = {
-                    NLI_ENTAILMENT: p_entail,
-                    NLI_NEUTRAL: p_neutral,
-                    NLI_CONTRADICTION: p_contrad,
-                }
-                pred_label = max(scores, key=scores.get)
-                
                 all_scores.append(NLIScore(
                     case_id="",  # Will be filled by caller
-                    sentence_id=0,  # Will be filled by caller
-                    chunk_id=0,  # Will be filled by caller
-                    window_id=0,  # Will be filled by caller
+                    claim_id=0,  # Will be filled by caller
+                    claim_text="",  # Will be filled by caller
+                    chunk_id=0,
+                    window_id=0,
+                    entailment_probability=p_entail,
+                    neutral_probability=p_neutral,
+                    contradiction_probability=p_contrad,
                     premise=premise,
                     hypothesis=hypothesis,
-                    p_entailment=p_entail,
-                    p_neutral=p_neutral,
-                    p_contradiction=p_contrad,
-                    predicted_label=pred_label,
                 ))
         
         return all_scores
@@ -399,15 +423,16 @@ def save_nli_cache(scores: list[NLIScore], cache_path: Path) -> None:
     for score in scores:
         records.append({
             "case_id": score.case_id,
-            "sentence_id": score.sentence_id,
+            "claim_id": score.claim_id,
+            "claim_text": score.claim_text,
             "chunk_id": score.chunk_id,
             "window_id": score.window_id,
+            "task_type": score.task_type,
             "premise": score.premise,
             "hypothesis": score.hypothesis,
-            "p_entailment": score.p_entailment,
-            "p_neutral": score.p_neutral,
-            "p_contradiction": score.p_contradiction,
-            "predicted_label": score.predicted_label,
+            "entailment_probability": score.entailment_probability,
+            "neutral_probability": score.neutral_probability,
+            "contradiction_probability": score.contradiction_probability,
         })
     
     df = pd.DataFrame(records)
@@ -422,9 +447,13 @@ def batch_inference(
     batch_size: int = 8,
     cache_path: Optional[Path] = None,
     verbose: bool = True,
+    task_type: str = "faithfulness",
 ) -> pd.DataFrame:
     """
     Run NLI inference on a batch of samples.
+    
+    For faithfulness: premise = context window, hypothesis = claim
+    For relevance: premise = question, hypothesis = claim
     
     Args:
         model: NLIModel instance
@@ -433,6 +462,7 @@ def batch_inference(
         batch_size: Batch size for inference
         cache_path: Path to cache file
         verbose: Whether to log progress
+        task_type: "faithfulness" or "relevance"
         
     Returns:
         DataFrame with all NLI scores
@@ -442,19 +472,10 @@ def batch_inference(
         return load_nli_cache(cache_path)
     
     all_scores = []
-    total_pairs = 0
-    
-    # Count total pairs for progress
-    for sample in samples:
-        seg = segments.get(sample.case_id)
-        if seg is None:
-            continue
-        total_pairs += len(seg) * sample.chunk_count
     
     if verbose:
-        logger.info(f"Running NLI inference on {len(samples)} samples ({total_pairs} pairs)")
+        logger.info(f"Running {task_type} NLI inference on {len(samples)} samples")
     
-    processed = 0
     start_time = time.time()
     
     for sample in samples:
@@ -463,94 +484,86 @@ def batch_inference(
             logger.warning(f"No segments found for case {sample.case_id}")
             continue
         
-        # For each sentence in the answer
-        for sentence_unit in seg.units:
-            # Estimate hypothesis tokens (add buffer)
-            hyp_tokens = len(model.tokenizer.encode(
-                sentence_unit.text,
-                add_special_tokens=False,
-            )) + 10
-            
-            # For each chunk, create windows and run inference
-            for chunk in sample.chunks:
-                windows = model.create_chunk_windows(
-                    chunk_text=chunk.chunk_text,
-                    case_id=sample.case_id,
-                    chunk_id=chunk.chunk_id,
-                    hypothesis_tokens=hyp_tokens,
-                )
+        # Determine premise based on task type
+        if task_type == "faithfulness":
+            # Faithfulness: premise = chunk window
+            for claim in seg.claims:
+                hyp_tokens = len(model.tokenizer.encode(
+                    claim.text, add_special_tokens=False
+                )) + 10
                 
-                if not windows:
-                    continue
-                
-                # Prepare batch inputs
-                premises = [w.window_text for w in windows]
-                hypotheses = [sentence_unit.text] * len(windows)
-                
-                # Check for truncation
-                truncated_count = sum(1 for w in windows if w.was_truncated)
-                if truncated_count > 0:
-                    logger.debug(
-                        f"Case {sample.case_id}, chunk {chunk.chunk_id}, "
-                        f"sentence {sentence_unit.sentence_id}: "
-                        f"{truncated_count}/{len(windows)} windows were truncated"
+                for chunk in sample.chunks:
+                    windows = model.create_chunk_windows(
+                        chunk_text=chunk.chunk_text,
+                        case_id=sample.case_id,
+                        chunk_id=chunk.chunk_id,
+                        hypothesis_tokens=hyp_tokens,
                     )
-                
-                # Run inference
-                scores = model.predict(premises, hypotheses, batch_size=batch_size)
-                
-                # Fill metadata
-                for score, window in zip(scores, windows):
-                    score.case_id = sample.case_id
-                    score.sentence_id = sentence_unit.sentence_id
-                    score.chunk_id = chunk.chunk_id
-                    score.window_id = window.window_id
-                
-                all_scores.extend(scores)
+                    
+                    if not windows:
+                        continue
+                    
+                    premises = [w.window_text for w in windows]
+                    hypotheses = [claim.text] * len(windows)
+                    
+                    scores = model.predict(premises, hypotheses, batch_size=batch_size)
+                    
+                    for score, window in zip(scores, windows):
+                        score.case_id = sample.case_id
+                        score.claim_id = claim.claim_id
+                        score.claim_text = claim.text
+                        score.chunk_id = chunk.chunk_id
+                        score.window_id = window.window_id
+                        score.task_type = task_type
+                        score.premise = window.window_text
+                        score.hypothesis = claim.text
+                    
+                    all_scores.extend(scores)
         
-        processed += 1
-        if verbose and processed % 50 == 0:
-            elapsed = time.time() - start_time
-            rate = processed / elapsed
-            remaining = (len(samples) - processed) / rate if rate > 0 else 0
-            logger.info(
-                f"Processed {processed}/{len(samples)} samples "
-                f"({100 * processed / len(samples):.1f}%), "
-                f"rate: {rate:.1f} samples/s, "
-                f"ETA: {remaining:.0f}s"
-            )
+        else:
+            # Relevance: premise = question, hypothesis = claim
+            premises = [sample.question] * len(seg.claims)
+            hypotheses = [claim.text for claim in seg.claims]
+            
+            scores = model.predict(premises, hypotheses, batch_size=batch_size)
+            
+            for score, claim in zip(scores, seg.claims):
+                score.case_id = sample.case_id
+                score.claim_id = claim.claim_id
+                score.claim_text = claim.text
+                score.chunk_id = 0  # No chunks for relevance
+                score.window_id = 0
+                score.task_type = task_type
+                score.premise = sample.question
+                score.hypothesis = claim.text
+            
+            all_scores.extend(scores)
     
     if verbose:
-        logger.info(f"Completed NLI inference: {len(all_scores)} scores in {time.time() - start_time:.1f}s")
+        elapsed = time.time() - start_time
+        logger.info(f"Completed {task_type} NLI: {len(all_scores)} scores in {elapsed:.1f}s")
     
     # Convert to DataFrame
     records = []
     for score in all_scores:
         records.append({
             "case_id": score.case_id,
-            "sentence_id": score.sentence_id,
+            "claim_id": score.claim_id,
+            "claim_text": score.claim_text,
             "chunk_id": score.chunk_id,
             "window_id": score.window_id,
+            "task_type": score.task_type,
             "premise": score.premise,
             "hypothesis": score.hypothesis,
-            "p_entailment": score.p_entailment,
-            "p_neutral": score.p_neutral,
-            "p_contradiction": score.p_contradiction,
-            "predicted_label": score.predicted_label,
+            "entailment_probability": score.entailment_probability,
+            "neutral_probability": score.neutral_probability,
+            "contradiction_probability": score.contradiction_probability,
         })
     
     df = pd.DataFrame(records)
     
-    # Validate probability sums
-    df["prob_sum"] = df["p_entailment"] + df["p_neutral"] + df["p_contradiction"]
-    invalid = df[abs(df["prob_sum"] - 1.0) > 0.01]
-    if len(invalid) > 0:
-        logger.warning(f"Found {len(invalid)} rows with probabilities not summing to ~1.0")
-    
-    df = df.drop(columns=["prob_sum"])
-    
     # Save cache
-    if cache_path:
+    if cache_path and all_scores:
         save_nli_cache(all_scores, cache_path)
     
     return df

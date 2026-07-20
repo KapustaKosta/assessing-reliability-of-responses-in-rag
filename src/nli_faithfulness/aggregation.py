@@ -1,8 +1,12 @@
 """
-Aggregation strategies for NLI-based Faithfulness detection.
+Aggregation strategies for NLI-based Faithfulness and Relevance detection.
 
-These strategies aggregate sentence-level NLI scores into sample-level
-faithfulness predictions.
+These strategies aggregate claim-level NLI scores into answer-level predictions.
+
+Key definitions:
+- Faithfulness: All claims are supported by context
+- Relevance: All claims address the question
+- Reliability: faithful AND relevant
 """
 
 from __future__ import annotations
@@ -11,41 +15,32 @@ import numpy as np
 import pandas as pd
 from typing import Optional, Callable
 
-from .constants import (
-    DEFAULT_ENTAILMENT_THRESHOLD,
-    DEFAULT_CONTRADICTION_THRESHOLD,
-    DEFAULT_SENTENCE_SUPPORT_THRESHOLD,
-)
-
 
 # =============================================================================
-# Strategy A: Whole Answer Max Entailment
+# Faithfulness Aggregation Strategies
 # =============================================================================
 
-def aggregate_whole_answer_max_entail(
+def aggregate_max_entail(
     scores_df: pd.DataFrame,
-    threshold: float = DEFAULT_ENTAILMENT_THRESHOLD,
+    threshold: float = 0.5,
 ) -> pd.DataFrame:
     """
-    Strategy A: Whole answer max entailment.
+    Strategy: Max Entailment
     
-    Treats the entire answer as a single unit and computes:
-        score = max(p_entailment) over all (sentence, chunk, window) pairs
+    Computes: score = max(entailment_probability) over all (claim, window) pairs
     
-    This is the simplest baseline - if any chunk window supports any part
-    of the answer with high entailment, predict faithful.
+    If ANY claim has strong entailment from ANY context window, predict faithful.
+    This is a lenient baseline - high recall for faithful, low precision.
     
     Args:
-        scores_df: DataFrame with columns [case_id, sentence_id, chunk_id, 
-                   window_id, p_entailment, p_neutral, p_contradiction]
+        scores_df: DataFrame with NLI scores
         threshold: Threshold for predicting faithful
         
     Returns:
-        DataFrame with columns [case_id, faithfulness_score, faithfulness_pred]
+        DataFrame with [case_id, faithfulness_score, faithfulness_pred]
     """
-    # For each case, get max entailment
     result = scores_df.groupby("case_id").agg(
-        faithfulness_score=("p_entailment", "max"),
+        faithfulness_score=("entailment_probability", "max"),
     ).reset_index()
     
     result["faithfulness_pred"] = (result["faithfulness_score"] >= threshold).astype(int)
@@ -53,80 +48,109 @@ def aggregate_whole_answer_max_entail(
     return result
 
 
-# =============================================================================
-# Strategy B: Whole Answer Entailment Minus Contradiction
-# =============================================================================
-
-def aggregate_whole_answer_entail_minus_contrad(
+def aggregate_entail_minus_contradiction(
     scores_df: pd.DataFrame,
     threshold: float = 0.0,
 ) -> pd.DataFrame:
     """
-    Strategy B: Whole answer entailment minus contradiction.
+    Strategy: Entailment Minus Contradiction
     
-    Computes:
-        score = max(p_entailment) - max(p_contradiction)
+    Computes: score = max(entailment) - max(contradiction)
     
-    This considers both supporting and contradicting evidence.
-    A higher score means more support relative to contradiction.
+    Balances support against contradiction evidence.
+    Higher score = more support relative to contradiction.
     
     Args:
-        scores_df: DataFrame with columns [case_id, p_entailment, p_contradiction]
+        scores_df: DataFrame with NLI scores
         threshold: Threshold for predicting faithful
         
     Returns:
-        DataFrame with columns [case_id, faithfulness_score, faithfulness_pred]
+        DataFrame with [case_id, faithfulness_score, faithfulness_pred]
     """
     result = scores_df.groupby("case_id").agg(
-        max_entail=("p_entailment", "max"),
-        max_contrad=("p_contradiction", "max"),
+        max_entail=("entailment_probability", "max"),
+        max_contrad=("contradiction_probability", "max"),
     ).reset_index()
     
     result["faithfulness_score"] = result["max_entail"] - result["max_contrad"]
     result["faithfulness_pred"] = (result["faithfulness_score"] >= threshold).astype(int)
     
-    # Drop intermediate columns
-    result = result.drop(columns=["max_entail", "max_contrad"])
+    return result[["case_id", "faithfulness_score", "faithfulness_pred"]]
+
+
+def aggregate_claim_min_support(
+    scores_df: pd.DataFrame,
+    threshold: float = 0.5,
+) -> pd.DataFrame:
+    """
+    Strategy: Claim Min Support
+    
+    For each claim: score = max(entailment) over all windows
+    Answer score: score = min(claim_score) over all claims
+    
+    This enforces "all claims must be supported" semantics.
+    The weakest claim determines the overall score.
+    
+    Args:
+        scores_df: DataFrame with NLI scores
+        threshold: Threshold for predicting faithful
+        
+    Returns:
+        DataFrame with [case_id, faithfulness_score, faithfulness_pred]
+    """
+    # Per-claim max entailment
+    claim_max = scores_df.groupby(["case_id", "claim_id"]).agg(
+        claim_support=("entailment_probability", "max"),
+    ).reset_index()
+    
+    # Answer-level: minimum claim support
+    result = claim_max.groupby("case_id").agg(
+        faithfulness_score=("claim_support", "min"),
+    ).reset_index()
+    
+    result["faithfulness_pred"] = (result["faithfulness_score"] >= threshold).astype(int)
     
     return result
 
 
-# =============================================================================
-# Strategy C: Sentence Min Support
-# =============================================================================
-
-def aggregate_sentence_min_support(
+def aggregate_contradiction_penalized_support(
     scores_df: pd.DataFrame,
-    threshold: float = DEFAULT_SENTENCE_SUPPORT_THRESHOLD,
+    penalty_weight: float = 0.3,
+    threshold: float = 0.0,
 ) -> pd.DataFrame:
     """
-    Strategy C: Sentence min support.
+    Strategy: Contradiction Penalized Support
     
-    For each sentence, computes:
-        sentence_support = max(p_entailment) over all (chunk, window) pairs
+    For each claim: 
+        claim_score = max(entailment) - penalty_weight * max(contradiction)
     
-    Then the sample score is:
-        sample_score = min(sentence_support) over all sentences
+    Answer score: min(claim_score) over all claims
     
-    This approximates the "all facts must be supported" semantics by requiring
-    every sentence to have at least some support from some chunk.
+    Penalizes clear contradictions while rewarding entailment.
     
     Args:
-        scores_df: DataFrame with columns [case_id, sentence_id, p_entailment]
-        threshold: Threshold for considering a sentence as "supported"
+        scores_df: DataFrame with NLI scores
+        penalty_weight: Weight for contradiction penalty (0.0-1.0)
+        threshold: Threshold for predicting faithful
         
     Returns:
-        DataFrame with columns [case_id, faithfulness_score, faithfulness_pred]
+        DataFrame with [case_id, faithfulness_score, faithfulness_pred]
     """
-    # Step 1: For each (case, sentence), get max entailment across chunks/windows
-    sentence_max = scores_df.groupby(["case_id", "sentence_id"]).agg(
-        sentence_support=("p_entailment", "max"),
+    # Per-claim scores
+    claim_scores = scores_df.groupby(["case_id", "claim_id"]).agg(
+        max_entail=("entailment_probability", "max"),
+        max_contrad=("contradiction_probability", "max"),
     ).reset_index()
     
-    # Step 2: For each case, get the minimum sentence support
-    # This represents the "weakest link"
-    result = sentence_max.groupby("case_id").agg(
-        faithfulness_score=("sentence_support", "min"),
+    # Apply penalty
+    claim_scores["claim_score"] = (
+        claim_scores["max_entail"] 
+        - penalty_weight * claim_scores["max_contrad"]
+    )
+    
+    # Answer-level: minimum claim score
+    result = claim_scores.groupby("case_id").agg(
+        faithfulness_score=("claim_score", "min"),
     ).reset_index()
     
     result["faithfulness_pred"] = (result["faithfulness_score"] >= threshold).astype(int)
@@ -135,258 +159,157 @@ def aggregate_sentence_min_support(
 
 
 # =============================================================================
-# Strategy D: Sentence Fraction Supported
+# Relevance Aggregation Strategies
 # =============================================================================
 
-def aggregate_sentence_fraction_supported(
+def aggregate_max_relevance(
     scores_df: pd.DataFrame,
-    sentence_threshold: float = DEFAULT_SENTENCE_SUPPORT_THRESHOLD,
-    min_fraction: float = 1.0,
+    threshold: float = 0.5,
 ) -> pd.DataFrame:
     """
-    Strategy D: Sentence fraction supported.
+    Strategy: Max Relevance
     
-    For each sentence, determines if it's supported:
-        sentence_supported = (max(p_entailment) >= sentence_threshold)
+    Computes: score = max(entailment) over all claims
     
-    Then computes:
-        fraction_supported = supported_sentences / total_sentences
-        sample_score = fraction_supported
-        sample_pred = (fraction_supported >= min_fraction)
+    If ANY claim is relevant, predict relevant.
     
     Args:
-        scores_df: DataFrame with columns [case_id, sentence_id, p_entailment]
-        sentence_threshold: Threshold for considering a sentence as "supported"
-        min_fraction: Minimum fraction of sentences that must be supported (0.0-1.0)
-                    Set to 1.0 for strict "all sentences supported"
-                    
-    Returns:
-        DataFrame with columns [case_id, faithfulness_score, faithfulness_pred]
-    """
-    # Step 1: For each (case, sentence), get max entailment
-    sentence_max = scores_df.groupby(["case_id", "sentence_id"]).agg(
-        sentence_support=("p_entailment", "max"),
-    ).reset_index()
-    
-    # Step 2: Determine if each sentence is supported
-    sentence_max["sentence_supported"] = (
-        sentence_max["sentence_support"] >= sentence_threshold
-    ).astype(int)
-    
-    # Step 3: For each case, compute fraction supported
-    result = sentence_max.groupby("case_id").agg(
-        faithfulness_score=("sentence_supported", "mean"),
-        total_sentences=("sentence_id", "count"),
-        supported_sentences=("sentence_supported", "sum"),
-    ).reset_index()
-    
-    result["faithfulness_pred"] = (result["faithfulness_score"] >= min_fraction).astype(int)
-    
-    # Drop intermediate columns
-    result = result.drop(columns=["total_sentences", "supported_sentences"])
-    
-    return result
-
-
-# =============================================================================
-# Strategy E: Sentence Support with Contradiction Penalty
-# =============================================================================
-
-def aggregate_sentence_support_with_contradiction_penalty(
-    scores_df: pd.DataFrame,
-    entailment_threshold: float = DEFAULT_ENTAILMENT_THRESHOLD,
-    contradiction_penalty: float = 0.3,
-    sample_threshold: float = 0.5,
-) -> pd.DataFrame:
-    """
-    Strategy E: Sentence support with contradiction penalty.
-    
-    For each sentence, computes:
-        sentence_entail = max(p_entailment) over all (chunk, window)
-        sentence_contrad = max(p_contradiction) over all (chunk, window)
-        sentence_score = sentence_entail - contradiction_penalty * sentence_contrad
-    
-    For the sample:
-        - If any sentence has sentence_contrad > 0.7, apply strong penalty
-        - Otherwise, use min(sentence_score) as sample score
-    
-    Formula:
-        sample_score = min(sentence_entail) 
-                      - contradiction_penalty * max(sentence_contrad)
-    
-    This penalizes clear contradictions more than neutral/missing evidence.
-    
-    Args:
-        scores_df: DataFrame with columns [case_id, sentence_id, 
-                   p_entailment, p_contradiction]
-        entailment_threshold: Threshold for considering a sentence as "supported"
-        contradiction_penalty: Weight for contradiction penalty (0.0-1.0)
-        sample_threshold: Threshold for predicting faithful
+        scores_df: DataFrame with relevance NLI scores
+        threshold: Threshold for predicting relevant
         
     Returns:
-        DataFrame with columns [case_id, faithfulness_score, faithfulness_pred]
+        DataFrame with [case_id, relevance_score, relevance_pred]
     """
-    # Step 1: For each (case, sentence), get max entailment and max contradiction
-    sentence_scores = scores_df.groupby(["case_id", "sentence_id"]).agg(
-        sentence_entail=("p_entailment", "max"),
-        sentence_contrad=("p_contradiction", "max"),
+    result = scores_df.groupby("case_id").agg(
+        relevance_score=("entailment_probability", "max"),
     ).reset_index()
     
-    # Step 2: Compute sentence-level score with contradiction penalty
-    sentence_scores["sentence_score"] = (
-        sentence_scores["sentence_entail"] 
-        - contradiction_penalty * sentence_scores["sentence_contrad"]
-    )
+    result["relevance_pred"] = (result["relevance_score"] >= threshold).astype(int)
     
-    # Step 3: For each case, get the minimum sentence score
-    # This represents the "weakest link" after penalty
-    result = sentence_scores.groupby("case_id").agg(
-        faithfulness_score=("sentence_score", "min"),
-        max_sentence_contrad=("sentence_contrad", "max"),
-        min_sentence_entail=("sentence_entail", "min"),
+    return result
+
+
+def aggregate_mean_relevance(
+    scores_df: pd.DataFrame,
+    threshold: float = 0.5,
+) -> pd.DataFrame:
+    """
+    Strategy: Mean Relevance
+    
+    Computes: score = mean(entailment) over all claims
+    
+    Averages relevance across all claims.
+    
+    Args:
+        scores_df: DataFrame with relevance NLI scores
+        threshold: Threshold for predicting relevant
+        
+    Returns:
+        DataFrame with [case_id, relevance_score, relevance_pred]
+    """
+    result = scores_df.groupby("case_id").agg(
+        relevance_score=("entailment_probability", "mean"),
     ).reset_index()
     
-    result["faithfulness_pred"] = (result["faithfulness_score"] >= sample_threshold).astype(int)
+    result["relevance_pred"] = (result["relevance_score"] >= threshold).astype(int)
     
-    # Drop intermediate columns
-    result = result.drop(columns=["max_sentence_contrad", "min_sentence_entail"])
+    return result
+
+
+def aggregate_claim_min_relevance(
+    scores_df: pd.DataFrame,
+    threshold: float = 0.5,
+) -> pd.DataFrame:
+    """
+    Strategy: Claim Min Relevance
+    
+    Answer score = min(claim_relevance) over all claims
+    
+    Enforces "all claims must be relevant".
+    
+    Args:
+        scores_df: DataFrame with relevance NLI scores
+        threshold: Threshold for predicting relevant
+        
+    Returns:
+        DataFrame with [case_id, relevance_score, relevance_pred]
+    """
+    result = scores_df.groupby("case_id").agg(
+        relevance_score=("entailment_probability", "min"),
+    ).reset_index()
+    
+    result["relevance_pred"] = (result["relevance_score"] >= threshold).astype(int)
     
     return result
 
 
 # =============================================================================
-# Helper functions
+# Reliability: Faithfulness AND Relevance
 # =============================================================================
 
-AGGREGATION_STRATEGIES: dict[str, Callable] = {
-    "whole_answer_max_entail": aggregate_whole_answer_max_entail,
-    "whole_answer_entail_minus_contrad": aggregate_whole_answer_entail_minus_contrad,
-    "sentence_min_support": aggregate_sentence_min_support,
-    "sentence_fraction_supported": aggregate_sentence_fraction_supported,
-    "sentence_support_with_contradiction_penalty": aggregate_sentence_support_with_contradiction_penalty,
+def compute_reliability(
+    faithfulness_df: pd.DataFrame,
+    relevance_df: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Compute reliability = faithfulness AND relevance.
+    
+    Args:
+        faithfulness_df: DataFrame with [case_id, faithfulness_pred]
+        relevance_df: DataFrame with [case_id, relevance_pred]
+        
+    Returns:
+        DataFrame with [case_id, reliability_pred]
+    """
+    merged = faithfulness_df.merge(
+        relevance_df,
+        on="case_id",
+        how="outer",
+    )
+    
+    merged["reliability_pred"] = (
+        (merged["faithfulness_pred"] == 1) & 
+        (merged["relevance_pred"] == 1)
+    ).astype(int)
+    
+    return merged[["case_id", "reliability_pred"]]
+
+
+# =============================================================================
+# Registry
+# =============================================================================
+
+FAITHFULNESS_STRATEGIES: dict[str, Callable] = {
+    "max_entail": aggregate_max_entail,
+    "entail_minus_contradiction": aggregate_entail_minus_contradiction,
+    "claim_min_support": aggregate_claim_min_support,
+    "contradiction_penalized_support": aggregate_contradiction_penalized_support,
+}
+
+RELEVANCE_STRATEGIES: dict[str, Callable] = {
+    "max_relevance": aggregate_max_relevance,
+    "mean_relevance": aggregate_mean_relevance,
+    "claim_min_relevance": aggregate_claim_min_relevance,
 }
 
 
-def apply_aggregation_strategy(
+def apply_faithfulness_strategy(
     scores_df: pd.DataFrame,
     strategy: str,
     **kwargs,
 ) -> pd.DataFrame:
-    """
-    Apply an aggregation strategy by name.
-    
-    Args:
-        scores_df: DataFrame with NLI scores
-        strategy: Name of the strategy
-        **kwargs: Additional arguments for the strategy function
-        
-    Returns:
-        DataFrame with faithfulness scores and predictions
-    """
-    if strategy not in AGGREGATION_STRATEGIES:
-        raise ValueError(
-            f"Unknown strategy: {strategy}. "
-            f"Available: {list(AGGREGATION_STRATEGIES.keys())}"
-        )
-    
-    return AGGREGATION_STRATEGIES[strategy](scores_df, **kwargs)
+    """Apply a faithfulness aggregation strategy."""
+    if strategy not in FAITHFULNESS_STRATEGIES:
+        raise ValueError(f"Unknown faithfulness strategy: {strategy}")
+    return FAITHFULNESS_STRATEGIES[strategy](scores_df, **kwargs)
 
 
-def compare_strategies(
+def apply_relevance_strategy(
     scores_df: pd.DataFrame,
-    strategies: list[str],
-    y_true: pd.Series,
+    strategy: str,
+    **kwargs,
 ) -> pd.DataFrame:
-    """
-    Compare multiple aggregation strategies.
-    
-    Args:
-        scores_df: DataFrame with NLI scores
-        strategies: List of strategy names to compare
-        y_true: Ground truth labels (indexed by case_id)
-        
-    Returns:
-        DataFrame with comparison results for each strategy
-    """
-    from sklearn.metrics import f1_score, precision_score, recall_score, accuracy_score
-    
-    results = []
-    
-    for strategy in strategies:
-        try:
-            preds_df = apply_aggregation_strategy(scores_df, strategy)
-            
-            # Align with ground truth
-            merged = preds_df.merge(
-                y_true.reset_index().rename(columns={"index": "case_id", 0: "y_true"}),
-                on="case_id",
-            )
-            
-            y_true_vals = merged["y_true"]
-            y_pred_vals = merged["faithfulness_pred"]
-            
-            results.append({
-                "strategy": strategy,
-                "accuracy": accuracy_score(y_true_vals, y_pred_vals),
-                "f1_macro": f1_score(y_true_vals, y_pred_vals, average="macro", zero_division=0),
-                "f1_positive": f1_score(y_true_vals, y_pred_vals, average="binary", pos_label=1, zero_division=0),
-                "f1_negative": f1_score(y_true_vals, y_pred_vals, average="binary", pos_label=0, zero_division=0),
-                "precision_positive": precision_score(y_true_vals, y_pred_vals, average="binary", pos_label=1, zero_division=0),
-                "recall_positive": recall_score(y_true_vals, y_pred_vals, average="binary", pos_label=1, zero_division=0),
-            })
-        except Exception as e:
-            results.append({
-                "strategy": strategy,
-                "error": str(e),
-            })
-    
-    return pd.DataFrame(results)
-
-
-# =============================================================================
-# Evidence extraction helpers
-# =============================================================================
-
-def get_best_evidence(
-    scores_df: pd.DataFrame,
-    case_id: str,
-) -> dict:
-    """
-    Get the best supporting evidence for a specific case.
-    
-    Args:
-        scores_df: DataFrame with NLI scores
-        case_id: The case to get evidence for
-        
-    Returns:
-        Dict with best entailment and contradiction evidence
-    """
-    case_scores = scores_df[scores_df["case_id"] == case_id]
-    
-    if len(case_scores) == 0:
-        return {}
-    
-    # Best entailment
-    best_entail = case_scores.loc[case_scores["p_entailment"].idxmax()]
-    
-    # Best contradiction
-    best_contrad = case_scores.loc[case_scores["p_contradiction"].idxmax()]
-    
-    return {
-        "best_entailment": {
-            "sentence_id": int(best_entail["sentence_id"]),
-            "chunk_id": int(best_entail["chunk_id"]),
-            "window_id": int(best_entail["window_id"]),
-            "p_entailment": float(best_entail["p_entailment"]),
-            "hypothesis": best_entail["hypothesis"],
-            "premise": best_entail["premise"],
-        },
-        "best_contradiction": {
-            "sentence_id": int(best_contrad["sentence_id"]),
-            "chunk_id": int(best_contrad["chunk_id"]),
-            "window_id": int(best_contrad["window_id"]),
-            "p_contradiction": float(best_contrad["p_contradiction"]),
-            "hypothesis": best_contrad["hypothesis"],
-            "premise": best_contrad["premise"],
-        },
-    }
+    """Apply a relevance aggregation strategy."""
+    if strategy not in RELEVANCE_STRATEGIES:
+        raise ValueError(f"Unknown relevance strategy: {strategy}")
+    return RELEVANCE_STRATEGIES[strategy](scores_df, **kwargs)
