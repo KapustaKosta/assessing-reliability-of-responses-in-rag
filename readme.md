@@ -1,15 +1,58 @@
-# Answer Reliability Classification
+# Zero-shot Claim-level NLI Faithfulness Baseline
 
-## Project Type
+**NOT a full Reliability evaluation. This is a Faithfulness-only baseline.**
 
-**Local Multilingual Encoder / NLI Classifier for Answer Reliability**
+## Project Name
 
-This project implements a claim-level faithfulness and relevance classifier using
-encoder-based NLI models. It is NOT:
-- LLM-as-judge
-- SelfCheckGPT
-- LoRA / marker-CoT
-- Full LLM fine-tuning
+**Zero-shot Claim-level NLI Faithfulness Baseline on RAGognize Validation**
+
+## Current Evaluation Scope
+
+| Component | Status |
+|-----------|--------|
+| **Faithfulness NLI** | ✅ Complete |
+| **Relevance Evaluation** | ❌ NOT AVAILABLE |
+| **Reliability** | ❌ NOT AVAILABLE |
+
+> **Important**: This project does NOT currently support full Reliability evaluation
+> because `addressed_user_prompt` (the Relevance gold label) is not available in the
+> RAGognize dataset version being used.
+
+## Label Semantics
+
+| Label | Meaning | Description |
+|-------|---------|-------------|
+| `0` | Unfaithful | Hallucination present in answer |
+| `1` | Faithful | No hallucination, answer supported by context |
+
+## Dataset: RAGognize (F4biian/RAGognize)
+
+| Property | Value |
+|----------|-------|
+| Raw train split | 1,842 questions |
+| Raw test split | 2,781 questions |
+| Models per question | 4 |
+| Validation questions | 277 (15% of train) |
+| Theoretical max validation responses | 277 × 4 = 1,108 |
+| Source data missing responses | 8 |
+| **Actual valid samples** | **1,100** |
+| Runtime silent skipped | 0 |
+
+### Sample Count Explanation
+
+- **277 validation questions** × 4 models = 1,108 theoretical responses
+- **8 model responses missing** from source data (some questions have < 4 models)
+- **1,100 valid samples** = 1,108 - 8 = 1,100
+- **0 runtime silent skipped** = all available samples were processed
+
+## Relevance Evaluation Status
+
+| Field | Availability |
+|-------|-------------|
+| `addressed_user_prompt` | **0 / 1,100** (NOT AVAILABLE) |
+| `answerable` | Available (but different semantics) |
+
+**Conclusion**: Relevance formal evaluation is NOT possible with current data.
 
 ## Architecture
 
@@ -19,202 +62,121 @@ Question + Retrieved Context + Answer
     ├─→ Answer Split into Claims
     │       │
     │       └─→ Claim 1, Claim 2, ..., Claim N
-    │           (each with claim_id, char positions, text)
     │
     ├─→ Long Context → Overlapping Windows
     │       │
     │       └─→ Window 1, Window 2, ..., Window M
-    │           (overlapping, preserves claim boundaries)
     │
-    ├─→ Faithfulness NLI
-    │       │
-    │       └─→ For each (Claim, Window) pair:
-    │               premise = context window
-    │               hypothesis = answer claim
-    │               → entailment / neutral / contradiction
-    │
-    ├─→ Relevance NLI
-    │       │
-    │       └─→ For each claim:
-    │               premise = question
-    │               hypothesis = claim
-    │               → claim_relevance_score
-    │
-    ├─→ Aggregation
-    │       │
-    │       ├─→ claim-level → answer-level faithfulness
-    │       └─→ claim-level → answer-level relevance
-    │
-    └─→ Reliability Decision
+    └─→ Faithfulness NLI (Current Scope)
             │
-            └─→ reliable = (faithful AND relevant)
+            └─→ For each (Claim, Window) pair:
+                    premise = context window
+                    hypothesis = answer claim
+                    → entailment / neutral / contradiction
+                    → aggregate → faithfulness prediction
+
+    [Relevance NLI - NOT IMPLEMENTED - awaiting gold labels]
+    
+    [Reliability = Faithful AND Relevant - NOT COMPUTED]
 ```
 
-## Reliability Definition
+## Model
+
+**MoritzLaurer/mDeBERTa-v3-base-mnli-xnli**
+- Multilingual (100+ languages, including English)
+- Zero-shot NLI (no fine-tuning in Phase 1)
+- Label indices read dynamically from `model.config.id2label`
+
+## Aggregation Strategies
+
+| Strategy | Formula |
+|----------|---------|
+| `max_entail` | score = max(p_entailment) |
+| `entail_minus_contradiction` | score = max(p_entail) - max(p_contrad) |
+| `claim_min_support` | score = min(claim_scores) |
+| `contradiction_penalized_support` | score = min(p_entail) - penalty × max(p_contrad) |
+
+## Validation Results (Zero-shot mDeBERTa)
+
+### Overall Metrics
+
+| Metric | Value |
+|--------|-------|
+| **Accuracy** | 0.4955 |
+| **Balanced Accuracy** | 0.5518 |
+| **Macro-F1** | 0.4880 |
+| **AUROC** | ~0.56 |
+
+### Per-Class Metrics
+
+| Class | Precision | Recall | F1 |
+|-------|-----------|--------|-----|
+| Unfaithful (0) | 0.311 | 0.678 | 0.426 |
+| Faithful (1) | 0.776 | 0.426 | 0.550 |
+
+### Confusion Matrix
 
 ```
-reliability = faithfulness AND relevance
-
-- faithful = 1: All claims are supported by context
-- relevant = 1: All claims address the question
-- reliable = 1: faithful=1 AND relevant=1
+                 Predicted
+              unfaithful  faithful
+Actual unfaithful    206       98
+        faithful    457      339
 ```
 
-An answer is **reliable** only when it is both:
-1. **Faithful**: All claims are consistent with the retrieved context
-2. **Relevant**: All claims directly address the user's question
+### Baseline Comparisons
 
-## Pipeline Components
+| Baseline | Accuracy | Balanced Acc | Macro-F1 |
+|----------|----------|-------------|----------|
+| Always Faithful | 0.724 | 0.500 | 0.418 |
+| Always Unfaithful | 0.276 | 0.500 | 0.418 |
+| Stratified Random | ~0.724 | ~0.500 | ~0.418 |
+| Majority (Faithful) | 0.724 | 0.500 | 0.418 |
+| **NLI (best)** | **0.496** | **0.552** | **0.488** |
 
-### 1. Answer Splitting
+### By Source Model
 
-Splits answers into atomic claims for fine-grained evaluation.
+| Model | N | Unfaithful | Acc | Macro-F1 |
+|-------|---|------------|-----|----------|
+| Llama-2-7b-chat-hf | 275 | 142 | 0.564 | 0.524 |
+| Llama-3.1-8B-Instruct | 275 | 15 | 0.295 | 0.267 |
+| Mistral-7B-Instruct-v0.1 | 275 | 99 | 0.487 | 0.478 |
+| Mistral-7B-Instruct-v0.3 | 275 | 48 | 0.364 | 0.359 |
 
-- Sentence splitting (base implementation)
-- Atomic claim extraction (interface preserved for future enhancement)
-- Each claim stores: `claim_id`, `char_start`, `char_end`, `claim_text`
+## What is NOT Included
 
-### 2. Context Windowing
-
-Handles long contexts with overlapping windows.
-
-- Overlapping windows with configurable stride
-- Claims are never truncated
-- `pair truncation only_first` for premise length control
-- Preserves: `window_id`, `token_range`, `doc_source`
-
-### 3. Faithfulness NLI
-
-Evaluates whether each claim is supported by the context.
-
-```python
-premise = retrieved_context_window
-hypothesis = answer_claim
-→ p(entailment), p(neutral), p(contradiction)
-```
-
-Label indices are read dynamically from `model.config.id2label`.
-
-### 4. Relevance NLI
-
-Evaluates whether each claim addresses the question.
-
-```python
-premise = question
-hypothesis = answer_claim
-→ claim_relevance_score
-```
-
-Phase 1 uses zero-shot NLI; interface preserved for training a binary classifier.
-
-### 5. Aggregation Strategies
-
-Combines claim-level scores into answer-level predictions.
-
-**Faithfulness aggregations:**
-- `max_entail`: score = max(p_entailment)
-- `entail_minus_contradiction`: score = max(p_entail) - max(p_contrad)
-- `claim_min_support`: score = min(p_entail) per claim
-- `contradiction_penalized_support`: score = mean(p_entail) - std(p_contrad)
-
-### 6. Prediction
-
-```python
-faithfulness_pred = (faithfulness_score >= faithfulness_threshold)
-relevance_pred = (relevance_score >= relevance_threshold)
-reliability_pred = faithfulness_pred AND relevance_pred
-```
-
-## Output Format
-
-Answer-level output includes:
-
-| Field | Description |
-|-------|-------------|
-| `case_id` | Unique case identifier |
-| `faithfulness_score` | Aggregated faithfulness metric |
-| `faithfulness_prediction` | Binary: 1=faithful, 0=unfaithful |
-| `relevance_score` | Aggregated relevance metric |
-| `relevance_prediction` | Binary: 1=relevant, 0=irrelevant |
-| `reliability_prediction` | Binary: 1=reliable, 0=unreliable |
-
-Claim-window level output includes:
-
-| Field | Description |
-|-------|-------------|
-| `case_id` | Unique case identifier |
-| `claim_id` | Claim identifier within answer |
-| `claim_text` | Text of the claim |
-| `window_id` | Context window identifier |
-| `entailment_probability` | P(entailment) |
-| `neutral_probability` | P(neutral) |
-| `contradiction_probability` | P(contradiction) |
-| `claim_faithfulness_score` | Claim-level faithfulness |
-| `claim_relevance_score` | Claim-level relevance |
-| `faithfulness_prediction` | Binary prediction |
-| `relevance_prediction` | Binary prediction |
-
-## Current Model
-
-**Phase 1: Zero-shot Baseline**
-
-Model: `MoritzLaurer/mDeBERTa-v3-base-mnli-xnli`
-- Multilingual (100+ languages)
-- No fine-tuning in phase 1
-- Full fine-tuning planned for phase 2
-
-## Datasets
-
-### RAGognize (F4biian/RAGognize)
-
-English RAG dataset with hallucination annotations.
-
-- 1,842 train samples
-- 2,781 test samples
-- 4 model responses per sample
-- Binary faithfulness labels from annotations
-
-### Russian Banking Dataset
-
-Legacy Russian customer service dataset with error markers.
-
-## Metrics
-
-Classification metrics computed for:
-
-1. **Faithfulness**: faithful vs unfaithful
-2. **Relevance**: relevant vs irrelevant
-3. **Reliability**: reliable vs unreliable
-
-Per-class metrics:
-- Precision
-- Recall
-- F1-score
-
-Aggregate metrics:
-- Accuracy
-- Balanced Accuracy
-- Macro F1
-- AUROC
-- AUPRC
+- Relevance evaluation (gold labels unavailable)
+- Reliability = Faithfulness AND Relevance
+- Fine-tuned models (Phase 2 not started)
+- Test evaluation (not run)
 
 ## Current Stage
 
 - [x] RAGognize adapter
-- [x] Data validation and split manifest
-- [x] Sentence splitting
+- [x] Data validation and split manifest (277 questions, 1100 samples)
+- [x] Sentence splitting with claim positions
 - [x] Context windowing
 - [x] Faithfulness NLI (zero-shot)
-- [x] Relevance NLI (zero-shot)
 - [x] Aggregation strategies
-- [x] Full validation evaluation
-- [ ] Encoder fine-tuning (Phase 2)
+- [x] Validation evaluation
+- [ ] **Relevance gold-label acquisition**
+- [ ] **Reliability evaluation**
+- [ ] Faithfulness Encoder fine-tuning (Phase 2)
 - [ ] Test evaluation
+
+## Phase 2 Considerations
+
+See [PHASE2_PLAN.md](PHASE2_PLAN.md) for detailed experimental plan.
+
+**Key prerequisites before Phase 2:**
+1. Acquire Relevance gold labels (or document why unavailable)
+2. Enable full Reliability evaluation
+3. Design Token-level Faithfulness training data
 
 ## Not Implemented
 
 - LLM-as-judge approaches
 - SelfCheckGPT-style methods
-- LoRA fine-tuning
+- LoRA fine-tuning (Phase 2)
 - Marker-CoT
 - External LLM API calls
+- Relevance evaluation (awaiting data)

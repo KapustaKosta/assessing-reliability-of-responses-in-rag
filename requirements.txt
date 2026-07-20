@@ -1,0 +1,20 @@
+# Requirements for RAG Reliability Evaluation
+# Generated: 2026-07-20
+
+# Core ML/AI
+transformers==5.14.1
+torch==2.13.0
+scikit-learn==1.9.0
+accelerate==1.14.0
+
+# Data handling
+datasets==5.0.0
+pandas==3.0.3
+numpy==2.4.6
+
+# HuggingFace
+huggingface-hub==1.24.0
+tokenizers==0.22.2
+
+# Utilities
+scipy==1.17.1

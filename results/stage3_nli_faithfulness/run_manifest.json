@@ -1,0 +1,121 @@
+{
+  "evaluation_name": "Zero-shot Claim-level NLI Faithfulness Baseline on RAGognize Validation",
+  "git_commit": "1eb4127",
+  "git_branch": "feature/ragognize-adapter",
+  "timestamp": "2026-07-20T00:00:00Z",
+  
+  "dataset": {
+    "name": "F4biian/RAGognize",
+    "revision": "aab54518c2a7c0d25fff8bffbf5337d0321de142",
+    "cache_path": "data/cache/huggingface/F4biian___ra_gognize/default/0.0.0/aab54518c2a7c0d25fff8bffbf5337d0321de142",
+    "split": {
+      "val_size": 0.15,
+      "seed": 42,
+      "n_val_questions": 277,
+      "n_theoretical_responses": 1108,
+      "n_source_missing": 8,
+      "n_valid_samples": 1100
+    }
+  },
+  
+  "sample_count": {
+    "val_questions": 277,
+    "theoretical_max_responses": 1108,
+    "source_data_missing_responses": 8,
+    "runtime_skipped": 0,
+    "actual_valid_samples": 1100,
+    "missing_explanation": "Some questions have fewer than 4 model responses in source data"
+  },
+  
+  "relevance_audit": {
+    "addressed_user_prompt_available": 0,
+    "total_samples": 1100,
+    "availability_rate": 0.0,
+    "note": "Relevance formal evaluation NOT AVAILABLE. addressed_user_prompt field missing from all samples."
+  },
+  
+  "label_semantics": {
+    "unfaithful": 0,
+    "faithful": 1,
+    "description": "faithfulness_label 0 = unfaithful (hallucination), 1 = faithful (no hallucination)"
+  },
+  
+  "model": {
+    "name": "MoritzLaurer/mDeBERTa-v3-base-mnli-xnli",
+    "label_mapping": {
+      "entailment_idx": 0,
+      "neutral_idx": 1,
+      "contradiction_idx": 2
+    },
+    "device": "mps",
+    "zero_shot": true
+  },
+  
+  "best_config": {
+    "threshold": 0.5,
+    "strategy": "max_entail"
+  },
+  
+  "dependencies": {
+    "python": "3.9",
+    "transformers": "4.x",
+    "torch": "2.x",
+    "datasets": "2.x",
+    "sklearn": "latest"
+  },
+  
+  "validation_metrics": {
+    "accuracy": 0.4955,
+    "balanced_accuracy": 0.5518,
+    "macro_f1": 0.4880,
+    "auroc": 0.56,
+    "unfaithful": {
+      "precision": 0.311,
+      "recall": 0.678,
+      "f1": 0.426
+    },
+    "faithful": {
+      "precision": 0.776,
+      "recall": 0.426,
+      "f1": 0.550
+    },
+    "confusion_matrix": {
+      "order": ["unfaithful", "faithful"],
+      "rows": "true_labels",
+      "columns": "predicted_labels",
+      "values": [[206, 98], [457, 339]]
+    }
+  },
+  
+  "baselines": {
+    "always_faithful": {"accuracy": 0.724, "balanced_acc": 0.500, "macro_f1": 0.418},
+    "always_unfaithful": {"accuracy": 0.276, "balanced_acc": 0.500, "macro_f1": 0.418},
+    "majority": {"accuracy": 0.724, "balanced_acc": 0.500, "macro_f1": 0.418}
+  },
+  
+  "subgroup_results": {
+    "Llama-2-7b-chat-hf": {"n": 275, "unfaithful": 142, "accuracy": 0.564, "macro_f1": 0.524},
+    "Llama-3.1-8B-Instruct": {"n": 275, "unfaithful": 15, "accuracy": 0.295, "macro_f1": 0.267},
+    "Mistral-7B-Instruct-v0.1": {"n": 275, "unfaithful": 99, "accuracy": 0.487, "macro_f1": 0.478},
+    "Mistral-7B-Instruct-v0.3": {"n": 275, "unfaithful": 48, "accuracy": 0.364, "macro_f1": 0.359}
+  },
+  
+  "skipped_samples": {
+    "runtime_skipped": 0,
+    "source_missing": 8,
+    "source_missing_explanation": "Model responses missing from source data (not inference failures)"
+  },
+  
+  "what_is_evaluated": {
+    "faithfulness": "COMPLETE",
+    "relevance": "NOT_AVAILABLE",
+    "reliability": "NOT_AVAILABLE"
+  },
+  
+  "what_is_not_evaluated": [
+    "Reliability = faithfulness AND relevance",
+    "Relevance formal evaluation",
+    "Fine-tuned models",
+    "Test set"
+  ]
+}
