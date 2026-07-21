@@ -29,28 +29,39 @@ All confusion matrices and metrics use **label order = [unfaithful, faithful]**.
 
 ---
 
-## 2. Sample Count Verification (1100 vs 1108)
+## 2. Sample Count Verification
 
 | Item | Count |
-|------|-------|
-| Raw train split questions | 1,842 |
-| Validation questions (15%) | **277** |
-| Models per question | 4 |
-| Theoretical max responses | 277 × 4 = **1,108** |
-| Source data missing | **8** |
-| **Actual valid samples** | **1,100** |
-| Runtime silent skipped | **0** |
+|---|---:|
+| Raw train rows | 1,842 |
+| Validation rows | **275** |
+| Unique validation questions | **141** |
+| Models per row | 4 |
+| Theoretical response slots | **1,100** |
+| Source-data missing | **0** |
+| Runtime skipped | **0** |
+| Actual valid samples | **1,100** |
 
-### Discrepancy Explanation
+### Verification
 
-- Expected: 277 × 4 = 1,108
-- Actual: 1,100
-- Difference: 8 samples
+The frozen RAGognize dataset revision deterministically produces:
 
-**Cause**: Some questions in the source data have fewer than 4 model responses.
-This is NOT an inference failure - it is source data characteristics.
+- 275 validation rows
+- 141 unique validation questions
+- 4 model responses per row
+- 1,100 valid response samples
+- 0 source-missing responses
+- 0 runtime-skipped samples
 
-**Verification**: No silent skipping during runtime. All 1,100 available samples were processed.
+Invariant:
+
+`1,100 = 0 + 1,100`
+
+Earlier documentation expected 277 rows, 1,108 theoretical slots,
+and 8 source-missing responses. These values could not be reproduced
+from the frozen dataset revision and should not be used for the final
+evaluation report.
+
 
 ---
 
