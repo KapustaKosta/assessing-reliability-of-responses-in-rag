@@ -1,0 +1,24 @@
+{
+  "threshold": 0.5,
+  "pooling_mode": "max",
+  "encoder": "MoritzLaurer/mDeBERTa-v3-base-mnli-xnli",
+  "best_epoch": 1,
+  "best_dev_f1": 0.5714285714285714,
+  "best_dev_metrics": {
+    "n": 30,
+    "accuracy": 0.4,
+    "balanced_accuracy": 0.5,
+    "f1": 0.5714285714285714,
+    "precision": 0.4,
+    "recall": 1.0,
+    "precision_unsupported_class": 0.4,
+    "recall_unsupported_class": 1.0,
+    "f1_macro": 0.2857142857142857,
+    "auroc": 0.4444444444444444,
+    "auprc": 0.45013558931568964,
+    "tn": 0,
+    "fp": 0,
+    "fn": 18,
+    "tp": 12
+  }
+}

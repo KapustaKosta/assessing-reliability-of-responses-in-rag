@@ -1,0 +1,2 @@
+epoch,train_loss,train_loss_last,dev_f1,dev_ba,dev_auroc,dev_auprc,dev_precision,dev_recall,lr,n_batches_completed,n_batches_skipped
+1,0.746341728247129,1.565539836883545,0.5714285714285714,0.5,0.4444444444444444,0.45013558931568964,0.4,1.0,2e-05,26,4
