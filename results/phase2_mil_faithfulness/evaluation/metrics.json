@@ -1,0 +1,56 @@
+{
+  "n_responses": 550,
+  "n_claims": 847,
+  "threshold": 0.5,
+  "accuracy": 0.6545454545454545,
+  "balanced_accuracy": 0.5,
+  "f1_binary": 0.7912087912087912,
+  "f1_macro": 0.3956043956043956,
+  "precision_unsupported": 0.6545454545454545,
+  "recall_unsupported": 1.0,
+  "auroc": 0.49698830409356726,
+  "auprc": 0.685863557560145,
+  "confusion_matrix": [
+    [
+      360,
+      0
+    ],
+    [
+      190,
+      0
+    ]
+  ],
+  "confusion_matrix_labels": [
+    "Unfaithful",
+    "Faithful"
+  ],
+  "by_source_model": {
+    "Mistral-7B-Instruct-v0.3": {
+      "n": 275,
+      "accuracy": 0.8254545454545454,
+      "balanced_accuracy": 0.5,
+      "f1_binary": 0.9043824701195219,
+      "f1_macro": 0.45219123505976094,
+      "auroc": 0.4757709251101322
+    },
+    "Llama-2-7b-chat-hf": {
+      "n": 275,
+      "accuracy": 0.48363636363636364,
+      "balanced_accuracy": 0.5,
+      "f1_binary": 0.6519607843137255,
+      "f1_macro": 0.32598039215686275,
+      "auroc": 0.5716403685269511
+    }
+  },
+  "claim_level": {
+    "n_claims": 847,
+    "n_supported": 607,
+    "n_unsupported": 240,
+    "accuracy": 0.2833530106257379,
+    "balanced_accuracy": 0.5,
+    "f1_binary": 0.44158233670653174,
+    "f1_macro": 0.22079116835326587,
+    "auroc": 0.44789950576606263
+  },
+  "gold_label_consistency": 1.0
+}

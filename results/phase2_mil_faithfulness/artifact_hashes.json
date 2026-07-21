@@ -1,0 +1,13 @@
+{
+  "results/phase2_mil_faithfulness/best_checkpoint.pt": "62459c431cba56c009f467bf649cab48f117a4c8ef681421cc73b35f6bf68f46",
+  "results/phase2_mil_faithfulness/best_config.json": "faa6851dbc35fec880380de214eed92a973e535e4686e812e57b371396df13bc",
+  "results/phase2_mil_faithfulness/training_history.csv": "582903f176359aa2a117c509bcdc5085522b27b181dba384ad99e85ff6e89919",
+  "results/phase2_mil_faithfulness/run_manifest.json": "f90a6cf6329227b3079b6043b723918c4591c3c336b2ed4fd62c053e5996eba3",
+  "results/phase2_mil_faithfulness/supervised_split_manifest.csv": "a3ef48e084ade4864ea170d63495d9b1a3251107ebb5ae79978b99ee989b298d",
+  "results/phase2_mil_faithfulness/claim_bags_train.jsonl": "3f60801583700b20cb4a3d72f8f17668d18f99e9e7a2613dff804a88922cedcd",
+  "results/phase2_mil_faithfulness/claim_bags_dev.jsonl": "89333f0e09c4a710c48ccd09f33fa29baeacd47fb21d92b0400577e5621b666e",
+  "results/phase2_mil_faithfulness/evaluation/metrics.json": "d8b467d6b3d3c9d008b18f63bf51629613043d5e791e7dd6fc90b4df3c1ab081",
+  "results/phase2_mil_faithfulness/evaluation/validation_predictions.csv": "9eccc74d6667eb9f448daf0379e0ad7258ae643d42b08b0632bcd8ff549a014f",
+  "results/phase2_mil_faithfulness/evaluation/validation_claim_predictions.jsonl": "cc15b45f7a9f22e1b812814c0c04f83a542a80df061bbb41388b5f9cad28a03b",
+  "results/phase2_mil_faithfulness/evaluation/error_analysis.csv": "94af1dc6d8bd55b4443a6405591f44addefcd5eb90ccf6a3d9cd3dc818b08402"
+}
