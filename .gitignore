@@ -238,3 +238,6 @@ checkpoints/
 
 # Legacy Russian RAG data (can be removed after migration)
 legacy_data/
+
+# Local Phase 2 model checkpoints
+results/phase2_mil_faithfulness/*.pt
