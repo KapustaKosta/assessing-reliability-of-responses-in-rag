@@ -1,0 +1,35 @@
+{
+  "theoretical_slots": 1100,
+  "source_missing": 0,
+  "actual_valid": 1100,
+  "val_questions": 275,
+  "manifest_path": "processed/ragognize_split_manifest.csv",
+  "manifest_hash": "b53a1e5e8c3ac989",
+  "split_seed": 42,
+  "by_model": {
+    "Llama-2-7b-chat-hf": {
+      "total": 275,
+      "present": 275,
+      "missing": 0
+    },
+    "Llama-3.1-8B-Instruct": {
+      "total": 275,
+      "present": 275,
+      "missing": 0
+    },
+    "Mistral-7B-Instruct-v0.1": {
+      "total": 275,
+      "present": 275,
+      "missing": 0
+    },
+    "Mistral-7B-Instruct-v0.3": {
+      "total": 275,
+      "present": 275,
+      "missing": 0
+    }
+  },
+  "faithfulness": {
+    "faithful": 796,
+    "unfaithful": 304
+  }
+}

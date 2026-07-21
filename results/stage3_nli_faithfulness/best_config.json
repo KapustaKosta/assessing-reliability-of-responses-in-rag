@@ -1,0 +1,5 @@
+{
+  "threshold": 0.12000000000000001,
+  "strategy": "max_entail",
+  "model": "MoritzLaurer/mDeBERTa-v3-base-mnli-xnli"
+}

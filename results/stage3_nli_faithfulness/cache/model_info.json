@@ -1,0 +1,17 @@
+{
+  "model_name": "MoritzLaurer/mDeBERTa-v3-base-mnli-xnli",
+  "device": "mps",
+  "id2label": {
+    "0": "entailment",
+    "1": "neutral",
+    "2": "contradiction"
+  },
+  "label2id": {
+    "contradiction": 2,
+    "entailment": 0,
+    "neutral": 1
+  },
+  "entailment_idx": 0,
+  "neutral_idx": 1,
+  "contradiction_idx": 2
+}

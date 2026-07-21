@@ -216,3 +216,25 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ============================================================
+# RAG Reliability Project
+# ============================================================
+
+# Hugging Face datasets cache
+data/cache/
+data/raw/
+data/processed/
+
+# Dataset files
+*.arrow
+*.parquet
+
+# Model outputs and checkpoints
+outputs/
+checkpoints/
+*.bin
+*.safetensors
+
+# Legacy Russian RAG data (can be removed after migration)
+legacy_data/
