@@ -111,7 +111,7 @@ def evaluate(
     from transformers import AutoTokenizer
     tokenizer = AutoTokenizer.from_pretrained(mil_config.encoder_name)
 
-    # Load model
+    # Device detection for evaluation
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = ClaimMILModel(mil_config, tokenizer=tokenizer)
     checkpoint = torch.load(checkpoint_path, weights_only=False)
@@ -182,7 +182,7 @@ def evaluate(
                 windows = [w.window_text for w in bag.context_windows]
                 result = model.forward(windows, bag.claim_text)
                 p_unsupported = result["p_unsupported"]
-                support_logit = result["support_logit"]
+                unsupported_logit = result["unsupported_logit"]
 
             bag_predictions.append({
                 "expanded_sample_id": bag.expanded_sample_id,
@@ -193,7 +193,7 @@ def evaluate(
                 "claim_char_end": bag.claim_char_end,
                 "claim_label_gold": bag.claim_label,
                 "p_unsupported": float(p_unsupported),
-                "support_logit": float(support_logit),
+                "unsupported_logit": float(unsupported_logit),
                 "gold_answer_faithful": bag.gold_answer_faithful,
                 "answer": bag.answer,
                 "question": bag.question,
@@ -374,6 +374,9 @@ def main():
                    help="Output directory (default: results_dir/evaluation)")
     p.add_argument("--models", nargs="+",
                    default=["Llama-2-7b-chat-hf", "Mistral-7B-Instruct-v0.3"])
+    p.add_argument("--device", type=str, default="auto",
+                   choices=["auto", "cpu", "cuda", "mps", "npu"],
+                   help="Device to use: auto, cpu, cuda, mps, npu")
     args = p.parse_args()
 
     results_dir = Path(args.results_dir)

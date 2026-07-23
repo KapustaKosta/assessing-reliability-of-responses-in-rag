@@ -6,9 +6,18 @@ Architecture:
 - Bag aggregation: max-pooling over context windows
 - Output: binary classification (supported vs unsupported)
 
-Label convention:
-    0 = supported
-    1 = unsupported
+Label/Logit/Loss Convention (Phase 2 - Unified):
+    label 0 = supported  (claim does NOT overlap hallucination span)
+    label 1 = unsupported (claim overlaps hallucination span)
+
+    The classifier outputs "unsupported_logit" directly:
+        unsupported_logit > 0  -> model thinks "unsupported"  -> p_unsupported = sigmoid(unsupported_logit) > 0.5
+        unsupported_logit < 0  -> model thinks "supported"    -> p_unsupported = sigmoid(unsupported_logit) < 0.5
+
+    This is consistent across:
+        - model.forward(): returns p_unsupported = sigmoid(unsupported_logit)
+        - mil_forward_batch(): uses BCEWithLogitsLoss(unsupported_logit, unsupported_label)
+        - evaluate.py: threshold applied to p_unsupported
 """
 
 from __future__ import annotations
@@ -39,6 +48,30 @@ class MILConfig:
     dropout: float = 0.1
     hidden_size: Optional[int] = None
 
+    def get_resolved_encoder_name(self) -> str:
+        """
+        Resolve encoder name to local path if CLAIM_MIL_MODEL_PATH is set.
+
+        Priority:
+        1. Use encoder_name if it's a valid directory
+        2. Fall back to CLAIM_MIL_MODEL_PATH environment variable
+        3. Return original encoder_name otherwise
+        """
+        import os
+        from pathlib import Path
+
+        # If encoder_name is a valid directory, use it
+        if Path(self.encoder_name).is_dir():
+            return self.encoder_name
+
+        # Check CLAIM_MIL_MODEL_PATH environment variable
+        env_path = os.environ.get("CLAIM_MIL_MODEL_PATH", "")
+        if env_path and Path(env_path).is_dir():
+            return env_path
+
+        # Fall back to original name
+        return self.encoder_name
+
 
 # =============================================================================
 # MIL Model
@@ -61,16 +94,26 @@ class ClaimMILModel(nn.Module):
         self.config = config
         self.tokenizer = tokenizer  # stored separately
 
-        # Load encoder
-        self.encoder_config = AutoConfig.from_pretrained(config.encoder_name)
+        # Resolve encoder name to local path if available
+        resolved_encoder_name = config.get_resolved_encoder_name()
+
+        # Load encoder config
+        self.encoder_config = AutoConfig.from_pretrained(
+            resolved_encoder_name,
+            local_files_only=True,
+        )
         hidden_size = (
             config.hidden_size
             if config.hidden_size is not None
             else self.encoder_config.hidden_size
         )
 
-        # Use eager attention universally - stable across MPS/CPU/CUDA
-        self.encoder = AutoModel.from_pretrained(config.encoder_name, attn_implementation="eager")
+        # Use eager attention universally - stable across MPS/CPU/CUDA/NPU
+        self.encoder = AutoModel.from_pretrained(
+            resolved_encoder_name,
+            attn_implementation="eager",
+            local_files_only=True,
+        )
 
         # Classification head
         self.dropout = nn.Dropout(config.dropout)
@@ -144,6 +187,13 @@ class ClaimMILModel(nn.Module):
         """
         Forward pass for a single claim bag.
 
+        Semantics (Phase 2 - Unified):
+            unsupported_logit > 0  -> model thinks "unsupported"  -> p_unsupported > 0.5
+            unsupported_logit < 0  -> model thinks "supported"    -> p_unsupported < 0.5
+
+            p_unsupported = sigmoid(unsupported_logit)
+            p_supported   = 1 - p_unsupported
+
         Args:
             context_windows: List of context window texts
             claim_text: The claim text (hypothesis)
@@ -152,7 +202,7 @@ class ClaimMILModel(nn.Module):
         Returns:
             dict with:
                 - bag_repr: aggregated bag representation
-                - support_logit: raw logit for supported (0)
+                - unsupported_logit: raw logit for unsupported class (positive = unsupported)
                 - p_unsupported: probability of unsupported (1)
                 - p_supported: probability of supported (0)
         """
@@ -160,21 +210,15 @@ class ClaimMILModel(nn.Module):
         bag_repr = self._aggregate_bag(window_repr)
         bag_repr = self.dropout(bag_repr)
 
-        logits = self.classifier(bag_repr.unsqueeze(0)).squeeze(-1)
+        unsupported_logit = self.classifier(bag_repr.unsqueeze(0)).squeeze(-1)
 
-        # Convention: logit > 0 means model thinks "supported" (class 0)
-        # We want p_unsupported = 1 - sigmoid(logit) = sigmoid(-logit)
-        # But for BCE loss we use: targets = label (0=supported, 1=unsupported)
-        # So we should use: loss = BCE(sigmoid(logit), label)
-        #   where sigmoid(logit) = p_supported
-        # and p_unsupported = 1 - sigmoid(logit)
-        support_logit = logits.item() if logits.numel() == 1 else logits[0].item()
-        p_supported = torch.sigmoid(logits)
-        p_unsupported = 1.0 - p_supported
+        unsupported_logit_val = unsupported_logit.item() if unsupported_logit.numel() == 1 else unsupported_logit[0].item()
+        p_unsupported = torch.sigmoid(unsupported_logit)
+        p_supported = 1.0 - p_unsupported
 
         return {
             "bag_repr": bag_repr,
-            "support_logit": support_logit,
+            "unsupported_logit": unsupported_logit_val,
             "p_supported": p_supported.mean().item() if p_supported.numel() > 1 else p_supported.item(),
             "p_unsupported": p_unsupported.mean().item() if p_unsupported.numel() > 1 else p_unsupported.item(),
         }
@@ -220,7 +264,7 @@ def batch_predict(
                 batch_results.append({
                     "p_unsupported": 0.5,
                     "p_supported": 0.5,
-                    "support_logit": 0.0,
+                    "unsupported_logit": 0.0,
                     "bag_repr": None,
                 })
                 continue

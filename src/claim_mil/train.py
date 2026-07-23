@@ -1,6 +1,22 @@
 """
 Training CLI for supervised MIL faithfulness model.
 
+Label/Logit/Loss Convention:
+    label 0 = supported (claim does NOT overlap hallucination span)
+    label 1 = unsupported (claim overlaps hallucination span)
+
+    The classifier outputs "unsupported_logit" directly:
+        unsupported_logit > 0  -> model thinks "unsupported"
+        unsupported_logit < 0  -> model thinks "supported"
+
+    Probability definitions (consistent across train/model/eval):
+        p_unsupported = sigmoid(unsupported_logit)
+        p_supported   = 1 - p_unsupported
+
+    Loss:
+        BCEWithLogitsLoss(unsupported_logit, unsupported_label)
+        pos_weight upweights the minority unsupported class
+
 Usage:
     python -m claim_mil.train --epochs 3 --batch_size 4 --lr 2e-5
     python -m claim_mil.train --smoke_test --max_bags 20
@@ -43,6 +59,72 @@ from claim_mil.model import ClaimMILModel, MILConfig
 
 logger = logging.getLogger(__name__)
 
+# =============================================================================
+# Device detection
+# =============================================================================
+
+def _detect_device(requested: str = "auto") -> torch.device:
+    """
+    Detect and return the best available device.
+
+    Priority: npu > cuda > mps > cpu
+
+    Supports: auto (detect), cpu, cuda, mps, npu
+    """
+    if requested == "cpu":
+        return torch.device("cpu")
+
+    if requested == "cuda":
+        if torch.cuda.is_available():
+            return torch.device("cuda")
+        raise RuntimeError("--device=cuda requested but CUDA is not available")
+
+    if requested == "mps":
+        if torch.backends.mps.is_available():
+            return torch.device("mps")
+        raise RuntimeError("--device=mps requested but MPS is not available")
+
+    if requested == "npu":
+        try:
+            import torch_npu  # noqa: F401
+            if hasattr(torch, "npu") and torch.npu.is_available():
+                return torch.device("npu")
+        except ImportError:
+            pass
+        raise RuntimeError("--device=npu requested but NPU (torch_npu) is not available")
+
+    # Auto: try npu > cuda > mps > cpu
+    # NPU
+    try:
+        import torch_npu  # noqa: F401
+        if hasattr(torch, "npu") and torch.npu.is_available():
+            logger.info("Auto-detected NPU device")
+            return torch.device("npu")
+    except ImportError:
+        pass
+
+    if torch.cuda.is_available():
+        logger.info("Auto-detected CUDA device")
+        return torch.device("cuda")
+
+    if torch.backends.mps.is_available():
+        # Note: MPS has known scatter_index issues with this MIL forward;
+        # use CPU for full training but allow for inference/testing
+        logger.info("Auto-detected MPS device (WARNING: known issues with MIL forward)")
+        return torch.device("mps")
+
+    logger.info("Auto-detected CPU device")
+    return torch.device("cpu")
+
+
+def _npu_first_amp_supported() -> bool:
+    """Phase 1: NPU does not support AMP."""
+    try:
+        import torch_npu  # noqa: F401
+        return False
+    except ImportError:
+        return True
+
 
 # =============================================================================
 # Dataset
@@ -78,6 +160,7 @@ def mil_forward_batch(
     batch_claims: list[str],
     batch_labels: list[int],
     device: torch.device,
+    criterion: nn.BCEWithLogitsLoss,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """
     Optimized MIL forward: encodes all (window, claim) pairs in one batched call
@@ -85,9 +168,16 @@ def mil_forward_batch(
 
     Handles empty-window bags by outputting a scalar 0.0 logit (neutral).
 
+    Semantics:
+        - Model outputs "unsupported_logit" directly (positive = unsupported)
+        - unsupported_logit > 0 -> p_unsupported = sigmoid(unsupported_logit) > 0.5
+        - unsupported_logit < 0 -> p_unsupported = sigmoid(unsupported_logit) < 0.5
+        - Loss: BCEWithLogitsLoss(unsupported_logit, unsupported_label)
+        - criterion MUST have pos_weight set by MILTrainer
+
     Returns:
-        (loss, logits_tensor)
-        logits: raw logits for "supported" class (positive = supported)
+        (loss, unsupported_logits_tensor)
+        unsupported_logits: raw logits for "unsupported" class (positive = unsupported)
     """
     # Flatten all (window, claim) pairs across the batch
     flat_text_pairs = []
@@ -105,7 +195,7 @@ def mil_forward_batch(
             indices.append(len(flat_text_pairs) - 1)
         bag_to_window_indices.append(indices)
 
-    all_support_logits: list[torch.Tensor] = []
+    all_unsupported_logits: list[torch.Tensor] = []
 
     if flat_text_pairs:
         tok = model.tokenizer
@@ -124,25 +214,30 @@ def mil_forward_batch(
         for windows, indices in zip(batch_windows, bag_to_window_indices):
             if indices is None:
                 # Empty bag: output neutral 0.0 for shape (1,)
-                all_support_logits.append(torch.zeros(1, device=device, requires_grad=True))
+                # sigmoid(0) = 0.5, so p_unsupported = 0.5 (neutral)
+                all_unsupported_logits.append(torch.zeros(1, device=device, requires_grad=True))
                 continue
 
             bag_repr = window_repr_all[indices].max(dim=0).values
             bag_repr = model.dropout(bag_repr)
-            logit = model.classifier(bag_repr.unsqueeze(0)).view(-1)
-            all_support_logits.append(logit)
+            unsupported_logit = model.classifier(bag_repr.unsqueeze(0)).view(-1)
+            all_unsupported_logits.append(unsupported_logit)
     else:
         # All bags empty: all-neutral
         for _ in batch_windows:
-            all_support_logits.append(torch.zeros(1, device=device, requires_grad=True))
+            all_unsupported_logits.append(torch.zeros(1, device=device, requires_grad=True))
 
-    logits = torch.stack(all_support_logits)
-    logits = logits.view(-1)
+    unsupported_logits = torch.stack(all_unsupported_logits)
+    unsupported_logits = unsupported_logits.view(-1)
     labels = torch.tensor(batch_labels, dtype=torch.float32).to(device)
-    criterion = nn.BCEWithLogitsLoss()
-    loss = criterion(logits, labels)
 
-    return loss, logits
+    # Use the criterion from MILTrainer (which has pos_weight set)
+    # BCEWithLogitsLoss(unsupported_logit, unsupported_label) where:
+    #   unsupported_label=1 -> loss = -log(sigmoid(unsupported_logit)) [harder if pos_weight > 1]
+    #   unsupported_label=0 -> loss = -log(1 - sigmoid(unsupported_logit))
+    loss = criterion(unsupported_logits, labels)
+
+    return loss, unsupported_logits
 
 
 # =============================================================================
@@ -158,6 +253,7 @@ class MILTrainer:
         dev_bags: list[ClaimBag],
         args: argparse.Namespace,
         results_dir: Path,
+        device: torch.device = None,
     ):
         self.model = model
         self.config = config
@@ -165,8 +261,10 @@ class MILTrainer:
         self.results_dir = results_dir
         self.results_dir.mkdir(parents=True, exist_ok=True)
 
-        # Note: MPS has scatter_index -1 errors with this MIL forward; CPU used for full training
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # Device: use passed device, or detect via _detect_device
+        if device is None:
+            device = _detect_device(getattr(args, "device", "auto"))
+        self.device = device
         logger.info(f"Using device: {self.device}")
         self.model.to(self.device)
 
@@ -197,9 +295,12 @@ class MILTrainer:
             self.optimizer, T_max=args.epochs, eta_min=args.lr * 0.1,
         )
 
-        # Mixed precision
-        self.use_amp = args.use_amp and self.device.type in ("cuda", "mps")
-        self.scaler = GradScaler('cuda') if self.use_amp else None
+        # Mixed precision: disable on NPU (Phase 1), allow on CUDA/MPS
+        amp_supported = _npu_first_amp_supported()
+        self.use_amp = args.use_amp and self.device.type in ("cuda", "mps") and amp_supported
+        self.scaler = GradScaler(self.device.type) if self.use_amp else None
+        if not amp_supported:
+            logger.info("AMP disabled (NPU not yet supported in Phase 1)")
 
         # Dataloaders
         self.train_loader = DataLoader(
@@ -222,6 +323,7 @@ class MILTrainer:
         self.dev_bags = dev_bags
 
         self.best_dev_f1 = 0.0
+        self.best_dev_macro_f1 = 0.0  # used for checkpoint selection
         self.best_epoch = 0
         self.patience_counter = 0
         self.history = []
@@ -245,12 +347,14 @@ class MILTrainer:
 
                 if self.use_amp:
                     with torch.amp.autocast(device_type=self.device.type, enabled=True):
-                        loss, logits = mil_forward_batch(
-                            self.model, batch_windows, batch_claims, batch_labels, self.device
+                        loss, unsupported_logits = mil_forward_batch(
+                            self.model, batch_windows, batch_claims, batch_labels,
+                            self.device, self.criterion,
                         )
                 else:
-                    loss, logits = mil_forward_batch(
-                        self.model, batch_windows, batch_claims, batch_labels, self.device
+                    loss, unsupported_logits = mil_forward_batch(
+                        self.model, batch_windows, batch_claims, batch_labels,
+                        self.device, self.criterion,
                     )
 
                 if self.use_amp:
@@ -268,18 +372,17 @@ class MILTrainer:
 
             else:
                 with torch.no_grad():
-                    loss, logits = mil_forward_batch(
-                        self.model, batch_windows, batch_claims, batch_labels, self.device
+                    loss, unsupported_logits = mil_forward_batch(
+                        self.model, batch_windows, batch_claims, batch_labels,
+                        self.device, self.criterion,
                     )
                 total_loss += loss.item()
 
             n_batches += 1
 
-            # Convert support logits to unsupported probabilities
-            # logit > 0 -> supported (label=0), logit < 0 -> unsupported (label=1)
-            # p_supported = sigmoid(logit), p_unsupported = sigmoid(-logit)
-            p_supported = torch.sigmoid(logits.detach()).cpu().numpy()
-            p_unsupported = 1.0 - p_supported
+            # p_unsupported = sigmoid(unsupported_logit) [positive = unsupported]
+            # p_supported = 1 - p_unsupported
+            p_unsupported = torch.sigmoid(unsupported_logits.detach()).cpu().numpy()
 
             preds = (p_unsupported >= 0.5).astype(int)
 
@@ -290,7 +393,9 @@ class MILTrainer:
             if train:
                 iterator.set_postfix({"loss": f"{loss.item():.4f}"})
 
-        self.scheduler.step()
+        # NOTE: scheduler.step() is called in train() after both train+dev,
+        # so each training epoch steps exactly once. Dev evaluation does NOT
+        # advance the scheduler.
 
         # Compute metrics
         all_labels = np.array(all_labels)
@@ -310,15 +415,19 @@ class MILTrainer:
             # Train
             train_m = self._run_epoch(epoch, self.train_loader, train=True)
 
-            # Eval
+            # Eval (does NOT step scheduler)
             dev_m = self._run_epoch(epoch, self.dev_loader, train=False)
             dev_f1 = dev_m.get("f1", 0)
+
+            # Step scheduler exactly ONCE per training epoch (after train+dev)
+            self.scheduler.step()
 
             logger.info(
                 f"Epoch {epoch+1} | "
                 f"Train loss={train_m['loss']:.4f} F1={train_m.get('f1',0):.4f} Acc={train_m.get('accuracy',0):.4f} | "
                 f"Dev F1={dev_f1:.4f} Acc={dev_m.get('accuracy',0):.4f} BA={dev_m.get('balanced_accuracy',0):.4f} "
-                f"AUROC={dev_m.get('auroc', 'N/A')} AUPRC={dev_m.get('auprc', 'N/A')}"
+                f"AUROC={dev_m.get('auroc', 'N/A')} AUPRC={dev_m.get('auprc', 'N/A')} "
+                f"LR={self.scheduler.get_last_lr()[0]:.2e}"
             )
 
             self.history.append({
@@ -334,12 +443,16 @@ class MILTrainer:
                 "lr": self.scheduler.get_last_lr()[0],
             })
 
-            if dev_f1 > self.best_dev_f1:
-                self.best_dev_f1 = dev_f1
+            # Use internal-dev macro-F1 to select best checkpoint (not binary F1)
+            dev_macro_f1 = dev_m.get("f1_macro", 0)
+
+            if dev_macro_f1 > self.best_dev_macro_f1:
+                self.best_dev_f1 = dev_f1  # binary F1 for reporting
+                self.best_dev_macro_f1 = dev_macro_f1
                 self.best_epoch = epoch + 1
                 self.patience_counter = 0
                 self._save_checkpoint(self.results_dir / "best_checkpoint.pt")
-                logger.info(f"  -> New best! Dev F1: {dev_f1:.4f}")
+                logger.info(f"  -> New best! Dev macro-F1: {dev_macro_f1:.4f}")
             else:
                 self.patience_counter += 1
                 if self.patience_counter >= self.args.patience:
@@ -370,8 +483,19 @@ class MILTrainer:
             "scheduler_state_dict": self.scheduler.state_dict(),
             "config": asdict(self.config),
             "best_dev_f1": self.best_dev_f1,
+            "best_dev_macro_f1": self.best_dev_macro_f1,
             "best_epoch": self.best_epoch,
         }, path)
+
+    def _load_checkpoint(self, path: Path):
+        """Reload a checkpoint's model weights into self.model."""
+        checkpoint = torch.load(path, weights_only=False)
+        self.model.load_state_dict(checkpoint["model_state_dict"])
+        logger.info(f"Loaded checkpoint from {path} (epoch={checkpoint.get('best_epoch')}, "
+                    f"dev_f1={checkpoint.get('best_dev_f1', 'N/A')})")
+
+    def get_best_checkpoint_path(self) -> Path:
+        return self.results_dir / "best_checkpoint.pt"
 
 
 # =============================================================================
@@ -488,7 +612,19 @@ def parse_args() -> argparse.Namespace:
                    default=["Llama-2-7b-chat-hf", "Mistral-7B-Instruct-v0.3"])
     p.add_argument("--dev_fraction", type=float, default=0.10)
     p.add_argument("--seed", type=int, default=42)
-    p.add_argument("--max_bags", type=int, default=None)
+    p.add_argument("--max_bags", type=int, default=None,
+                   help="[DEPRECATED] Use --max_train_bags / --max_dev_bags instead. "
+                        "This flag does simple list truncation without stratification.")
+    p.add_argument("--max_train_bags", type=int, default=None,
+                   help="Maximum number of train bags (stratified sampling)")
+    p.add_argument("--max_dev_bags", type=int, default=None,
+                   help="Maximum number of dev bags (stratified sampling)")
+    p.add_argument("--min_train_bags", type=int, default=16,
+                   help="Minimum train bags for overfit diagnostic (default: 16)")
+
+    p.add_argument("--device", type=str, default="auto",
+                   choices=["auto", "cpu", "cuda", "mps", "npu"],
+                   help="Device to use: auto (NPU>CUDA>MPS>CPU), cpu, cuda, mps, npu")
 
     p.add_argument("--encoder", type=str,
                    default="MoritzLaurer/mDeBERTa-v3-base-mnli-xnli")
@@ -507,12 +643,59 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--no_amp", dest="use_amp", action="store_false")
 
     p.add_argument("--results_dir", type=str,
-                   default="results/phase2_mil_faithfulness")
-    p.add_argument("--smoke_test", action="store_true")
-    p.add_argument("--overfit_diagnostic", action="store_true")
-    p.add_argument("--val_only", action="store_true")
+                   default="results/phase2_mil_faithfulness",
+                   help="Results directory")
+    p.add_argument("--smoke_test", action="store_true",
+                   help="Run smoke test only")
+    p.add_argument("--overfit_diagnostic", action="store_true",
+                   help="Run overfit diagnostic only")
+    p.add_argument("--val_only", action="store_true",
+                   help="Skip training, only build validation data")
 
     return p.parse_args()
+
+def _stratified_sample_bags(
+    bags: list[ClaimBag],
+    n: int,
+    seed: int = 42,
+    min_bags: int = 16,
+) -> list[ClaimBag]:
+    """
+    Stratified sampling: ensure both supported (label=0) and unsupported (label=1)
+    bags are proportionally represented.
+
+    Returns up to n bags. If n >= len(bags), returns all bags.
+    """
+    if n is None or n >= len(bags):
+        return bags
+
+    # Separate by class
+    supported = [b for b in bags if b.claim_label == 0]
+    unsupported = [b for b in bags if b.claim_label == 1]
+
+    if not supported or not unsupported:
+        # Fallback to simple random sample
+        rng = random.Random(seed)
+        result = list(rng.sample(bags, min(n, len(bags))))
+        return result
+
+    # Proportional allocation
+    total = len(supported) + len(unsupported)
+    n_supported = max(1, int(round(n * len(supported) / total)))
+    n_unsupported = n - n_supported
+
+    rng = random.Random(seed)
+    sampled_supported = list(rng.sample(supported, min(n_supported, len(supported))))
+    sampled_unsupported = list(rng.sample(unsupported, min(n_unsupported, len(unsupported))))
+
+    result = sampled_supported + sampled_unsupported
+    rng.shuffle(result)
+
+    # Enforce minimum
+    if len(result) < min_bags:
+        result = bags[:min_bags]
+
+    return result
 
 
 # =============================================================================
@@ -535,9 +718,18 @@ def main():
     np.random.seed(args.seed)
     random.seed(args.seed)
 
+    # Deprecation warning for --max_bags
+    if args.max_bags is not None:
+        logger.warning(
+            "WARNING: --max_bags is deprecated. Use --max_train_bags / --max_dev_bags "
+            "with stratified sampling. --max_bags does simple list truncation."
+        )
+
     logger.info("=" * 60)
     logger.info("PHASE 2: SUPERVISED MIL FAITHFULNESS")
     logger.info("=" * 60)
+    logger.info(f"Label convention: 0=supported, 1=unsupported")
+    logger.info(f"Logit convention: unsupported_logit > 0 -> p_unsupported > 0.5")
 
     mil_config = MILConfig(
         encoder_name=args.encoder,
@@ -573,6 +765,11 @@ def main():
     logger.info("Loading RAGognize dataset...")
     raw = load_ragognize_dataset()
 
+    # ---- Data Leakage Audit ----
+    # raw["test"] is the official test set used by the project for final evaluation.
+    # It MUST NOT be used for training or internal dev. We only use raw["train"].
+    logger.info(f"Dataset splits: train={len(raw['train'])}, test={len(raw['test'])}")
+
     split_info = create_train_val_split(raw, val_size=0.15, seed=42)
     project_val_qids = {
         raw["train"][i]["user_prompt_index"]
@@ -580,26 +777,30 @@ def main():
     }
     logger.info(f"Project val questions: {len(project_val_qids)}")
 
+    # Audit: check if test set question_ids overlap with val_qids
+    test_qids = {item["user_prompt_index"] for item in raw["test"]}
+    val_test_overlap = project_val_qids & test_qids
+    if val_test_overlap:
+        logger.warning(f"CRITICAL: {len(val_test_overlap)} question IDs overlap between "
+                       "project val and official test. These must be excluded.")
+
     adapter = RAGognizeAdapter(models=args.models)
 
-    # Build train samples from project train (exclude val questions)
+    # Build train samples from project train ONLY (exclude val questions)
+    # IMPORTANT: raw["test"] is the official test set and must NEVER be used for training.
     train_items = []
     for row_idx, item in enumerate(raw["train"]):
         qid = item["user_prompt_index"]
         if qid in project_val_qids:
-            continue
+            continue  # Exclude project val questions
         item_copy = dict(item)
         item_copy["_source_row_index"] = row_idx
         item_copy["_source_split"] = "train"
         train_items.append(item_copy)
 
-    for row_idx, item in enumerate(raw["test"]):
-        item_copy = dict(item)
-        item_copy["_source_row_index"] = row_idx
-        item_copy["_source_split"] = "test"
-        train_items.append(item_copy)
-
-    logger.info(f"Project train items: {len(train_items)}")
+    # DO NOT add raw["test"] to training! This is the official test set.
+    # if we added it here, we'd have official test leakage.
+    logger.info(f"Project train items (from raw['train'] only): {len(train_items)}")
 
     # Expand to UnifiedSamples
     unified = []
@@ -646,15 +847,30 @@ def main():
         dev_bags.extend(bags)
         skipped.extend(sk)
 
-    if args.max_bags:
-        train_bags = train_bags[: args.max_bags]
-        dev_bags = dev_bags[: args.max_bags]
+    # Apply stratified subsampling (preferred) or deprecated max_bags truncation
+    if args.max_train_bags is not None or args.max_dev_bags is not None:
+        if args.max_bags is not None:
+            logger.warning("Both --max_train_bags/--max_dev_bags and deprecated "
+                          "--max_bags provided. Using new stratified sampling.")
+        train_bags = _stratified_sample_bags(
+            train_bags, args.max_train_bags, seed=args.seed, min_bags=args.min_train_bags
+        )
+        dev_bags = _stratified_sample_bags(
+            dev_bags, args.max_dev_bags, seed=args.seed, min_bags=8
+        )
+    elif args.max_bags is not None:
+        # Deprecated: simple list truncation (no stratification)
+        logger.warning("Using deprecated --max_bags (simple truncation, no stratification).")
+        train_bags = train_bags[:args.max_bags]
+        dev_bags = dev_bags[:args.max_bags]
 
     n_train_pos = sum(b.claim_label for b in train_bags)
     n_dev_pos = sum(b.claim_label for b in dev_bags)
     logger.info(
-        f"Bags: train={len(train_bags)} (pos={n_train_pos}, {n_train_pos/len(train_bags)*100:.1f}%), "
-        f"dev={len(dev_bags)} (pos={n_dev_pos}, {n_dev_pos/len(dev_bags)*100:.1f}%), "
+        f"Bags: train={len(train_bags)} (unsupported={n_train_pos}, "
+        f"{n_train_pos/len(train_bags)*100:.1f}%), "
+        f"dev={len(dev_bags)} (unsupported={n_dev_pos}, "
+        f"{n_dev_pos/len(dev_bags)*100:.1f}%), "
         f"skipped={len(skipped)}"
     )
 
@@ -708,17 +924,27 @@ def main():
             result = model.forward(windows, bag.claim_text)
             logger.info(f"Forward OK: p_unsupported={result['p_unsupported']:.4f}")
 
-            # Backward
+            # Backward (with pos_weight criterion)
             model.train()
-            loss, logits = mil_forward_batch(
+            pos_w = torch.tensor([2.0])  # dummy pos_weight
+            criterion = nn.BCEWithLogitsLoss(pos_weight=pos_w)
+            loss, unsupported_logits = mil_forward_batch(
                 model,
                 [windows],
                 [bag.claim_text],
                 [bag.claim_label],
                 device,
+                criterion,
             )
             loss.backward()
-            logger.info(f"Backward OK: loss={loss.item():.4f}")
+            logger.info(f"Backward OK: loss={loss.item():.4f}, "
+                        f"unsupported_logit={unsupported_logits.item():.4f}")
+
+            # Verify p_unsupported = sigmoid(unsupported_logit)
+            p_unsupported_check = torch.sigmoid(unsupported_logits).item()
+            assert abs(p_unsupported_check - result["p_unsupported"]) < 0.01, \
+                "p_unsupported mismatch between model.forward and mil_forward_batch"
+            logger.info("Probability consistency verified")
 
             # Checkpoint
             ckpt = results_dir / "smoke_checkpoint.pt"
@@ -737,46 +963,150 @@ def main():
 
     if args.overfit_diagnostic:
         logger.info("=== OVERFIT DIAGNOSTIC ===")
-        tiny_bags = train_bags[: min(20, len(train_bags))]
-        device = torch.device("cpu")
+        logger.info("Using stratified sampling for overfit diagnostic...")
+
+        # Stratified selection: 16-64 bags with both classes
+        diag_bags = _stratified_sample_bags(
+            train_bags, n=32, seed=args.seed, min_bags=16
+        )
+
+        if len(diag_bags) < 16:
+            logger.error(f"Not enough bags for overfit diagnostic: {len(diag_bags)} < 16")
+            sys.exit(1)
+
+        n_unsupported_diag = sum(b.claim_label for b in diag_bags)
+        n_supported_diag = len(diag_bags) - n_unsupported_diag
+        logger.info(f"Overfit bags: total={len(diag_bags)}, "
+                    f"supported={n_supported_diag}, unsupported={n_unsupported_diag}")
+
+        device = _detect_device("cpu")
         model = ClaimMILModel(mil_config, tokenizer=tokenizer)
         model.to(device)
+        model.train()
+
+        # Criterion with pos_weight for realistic training
+        diag_labels = np.array([b.claim_label for b in diag_bags])
+        n_pos_d = int(diag_labels.sum())
+        n_neg_d = len(diag_labels) - n_pos_d
+        pos_w_diag = torch.tensor([n_neg_d / max(n_pos_d, 1)])
+        criterion_diag = nn.BCEWithLogitsLoss(pos_weight=pos_w_diag)
+
         opt = torch.optim.AdamW(model.parameters(), lr=1e-3)
+        scheduler_diag = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=30, eta_min=1e-5)
 
-        init_losses = []
-        final_losses = []
+        init_loss = None
+        exit_code = 0
 
-        for epoch in range(10):
+        for epoch in range(30):
             model.train()
             epoch_losses = []
-            for i in range(0, len(tiny_bags), 4):
-                batch = tiny_bags[i : i + 4]
+            epoch_preds = []
+            epoch_labels = []
+
+            rng = random.Random(args.seed + epoch)
+            shuffled = list(rng.sample(diag_bags, len(diag_bags)))
+
+            for i in range(0, len(shuffled), 4):
+                batch = shuffled[i:i + 4]
                 windows = [[w.window_text for w in b.context_windows] for b in batch]
                 claims = [b.claim_text for b in batch]
                 labels = [b.claim_label for b in batch]
 
-                loss, _ = mil_forward_batch(model, windows, claims, labels, device)
+                loss, _ = mil_forward_batch(
+                    model, windows, claims, labels, device, criterion_diag
+                )
                 opt.zero_grad()
                 loss.backward()
+                torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
                 opt.step()
                 epoch_losses.append(loss.item())
 
-            avg_loss = np.mean(epoch_losses)
-            if epoch == 0:
-                init_losses.append(avg_loss)
-            if epoch == 9:
-                final_losses.append(avg_loss)
-            logger.info(f"  Epoch {epoch+1}: loss={avg_loss:.4f}")
+            scheduler_diag.step()
 
-        if init_losses and final_losses:
-            decrease = init_losses[0] - final_losses[0]
+            # Evaluate
+            model.eval()
+            eval_windows = [[w.window_text for w in b.context_windows] for b in diag_bags]
+            eval_claims = [b.claim_text for b in diag_bags]
+            eval_labels = [b.claim_label for b in diag_bags]
+
+            with torch.no_grad():
+                _, eval_logits = mil_forward_batch(
+                    model, eval_windows, eval_claims, eval_labels, device, criterion_diag
+                )
+
+            eval_probs = torch.sigmoid(eval_logits).cpu().numpy()
+            eval_preds = (eval_probs >= 0.5).astype(int)
+            eval_labels_np = np.array(eval_labels)
+
+            from sklearn.metrics import accuracy_score, f1_score
+            epoch_acc = accuracy_score(eval_labels_np, eval_preds)
+            epoch_f1 = f1_score(eval_labels_np, eval_preds, average="macro")
+            avg_loss = np.mean(epoch_losses)
+
+            if epoch == 0:
+                init_loss = avg_loss
+
+            n_pred_unsupported = int((eval_preds == 1).sum())
+            n_pred_supported = int((eval_preds == 0).sum())
+
             logger.info(
-                f"Overfit diag: init={init_losses[0]:.4f} final={final_losses[0]:.4f} "
-                f"decrease={decrease:.4f}"
+                f"  Epoch {epoch+1}: loss={avg_loss:.4f} acc={epoch_acc:.4f} "
+                f"macro_F1={epoch_f1:.4f} "
+                f"pred_unsupported={n_pred_unsupported} pred_supported={n_pred_supported} "
+                f"LR={scheduler_diag.get_last_lr()[0]:.2e}"
             )
-            assert decrease > 0.1, "Loss should decrease substantially on tiny set"
-        logger.info("=== OVERFIT DIAGNOSTIC PASSED ===")
-        return
+
+            # Check for NaN/Inf
+            if np.isnan(avg_loss) or np.isinf(avg_loss):
+                logger.error(f"NaN/Inf detected at epoch {epoch+1}")
+                exit_code = 1
+                break
+
+            # Success criteria
+            if epoch >= 9 and epoch_acc >= 0.95 and epoch_f1 >= 0.95:
+                logger.info(f"  -> Overfit diagnostic PASSED at epoch {epoch+1}: "
+                            f"acc={epoch_acc:.4f}, macro_F1={epoch_f1:.4f}")
+                break
+        else:
+            # Did not reach success criteria
+            logger.error(
+                f"Overfit diagnostic FAILED: after 30 epochs, acc={epoch_acc:.4f} "
+                f"(target >= 0.95), macro_F1={epoch_f1:.4f} (target >= 0.95)"
+            )
+            exit_code = 1
+
+        # Checkpoint consistency
+        ckpt_path = results_dir / "overfit_diag_checkpoint.pt"
+        torch.save({"model_state_dict": model.state_dict()}, ckpt_path)
+        loaded_ckpt = torch.load(ckpt_path, weights_only=False)
+        model2 = ClaimMILModel(mil_config, tokenizer=tokenizer)
+        model2.to(device)
+        model2.load_state_dict(loaded_ckpt["model_state_dict"])
+        model2.eval()
+
+        with torch.no_grad():
+            _, logits_before = mil_forward_batch(
+                model, eval_windows, eval_claims, eval_labels, device, criterion_diag
+            )
+            _, logits_after = mil_forward_batch(
+                model2, eval_windows, eval_claims, eval_labels, device, criterion_diag
+            )
+        diff = torch.max(torch.abs(logits_before - logits_after)).item()
+        if diff > 1e-6:
+            logger.error(f"Checkpoint consistency check FAILED: max_diff={diff:.2e}")
+            exit_code = 1
+        else:
+            logger.info("Checkpoint consistency: PASSED")
+
+        if init_loss is not None and avg_loss is not None:
+            loss_decrease = init_loss - avg_loss
+            logger.info(f"Loss decrease: {init_loss:.4f} -> {avg_loss:.4f} = {loss_decrease:.4f}")
+            if loss_decrease < 0:
+                logger.error(f"Loss did NOT decrease: {loss_decrease:.4f}")
+                exit_code = 1
+
+        logger.info("=== OVERFIT DIAGNOSTIC COMPLETE ===")
+        sys.exit(exit_code)
 
     if args.val_only:
         logger.info("--val_only: skipping training")
@@ -784,16 +1114,24 @@ def main():
 
     # ---- Full Training ----
     logger.info("=== TRAINING ===")
+    device = _detect_device(args.device)
     model = ClaimMILModel(mil_config, tokenizer=tokenizer)
     trainer = MILTrainer(
         model=model, config=mil_config,
         train_bags=train_bags, dev_bags=dev_bags,
         args=args, results_dir=results_dir,
+        device=device,
     )
 
     train_result = trainer.train()
 
-    # Threshold selection
+    # CRITICAL: Reload the best checkpoint before threshold selection
+    # The model in memory may have advanced past the best checkpoint state
+    best_ckpt_path = trainer.get_best_checkpoint_path()
+    logger.info(f"=== RELOADING BEST CHECKPOINT: {best_ckpt_path} ===")
+    trainer._load_checkpoint(best_ckpt_path)
+
+    # Threshold selection on the SAME model state as best checkpoint
     logger.info("=== THRESHOLD SELECTION ===")
     best_thresh, thresh_info = select_threshold(model, dev_bags, trainer.device)
 
@@ -804,6 +1142,10 @@ def main():
         "encoder": args.encoder,
         "best_epoch": train_result["best_epoch"],
         "best_dev_f1": train_result["best_dev_f1"],
+        "best_dev_macro_f1": trainer.best_dev_macro_f1,
+        "checkpoint_path": str(best_ckpt_path),
+        "train_pos_rate": n_train_pos / len(train_bags) if train_bags else 0,
+        "dev_pos_rate": n_dev_pos / len(dev_bags) if dev_bags else 0,
     }
     with open(results_dir / "best_config.json", "w") as f:
         json.dump(best_config, f, indent=2)
@@ -824,17 +1166,25 @@ def main():
         "skipped_count": len(skipped),
         "best_threshold": best_thresh,
         "best_dev_f1": train_result["best_dev_f1"],
+        "best_dev_macro_f1": trainer.best_dev_macro_f1,
         "best_epoch": train_result["best_epoch"],
         "training_elapsed_seconds": train_result["elapsed_seconds"],
         "split": split_result["manifest"],
         "leakage": split_result["leakage"],
         "pooling_mode": args.pooling_mode,
         "encoder": args.encoder,
+        "device": str(device),
+        "data_leakage_audit": {
+            "official_test_used_in_training": False,
+            "official_test_size": len(raw["test"]),
+            "project_val_overlap_with_test": len(val_test_overlap),
+        },
     }
     with open(results_dir / "run_manifest.json", "w") as f:
         json.dump(manifest, f, indent=2)
 
     logger.info(f"Done. Manifest: {results_dir / 'run_manifest.json'}")
+    logger.info(f"Best config: {results_dir / 'best_config.json'}")
 
 
 if __name__ == "__main__":
