@@ -1,0 +1,24 @@
+=== Evaluator Regression Tests Summary ===
+Commit: c001743
+Date: 2026-07-23
+
+All 13 tests PASSED:
+1. Gold == Prediction → Char F1 = 1.0
+2. Partial overlap → Char F1 > 0
+3. Gold positive, pred zero → Char F1 = 0, num_pred_chars = 0
+4. Gold zero, pred positive → Char F1 = 0, num_gold_chars = 0
+5. Adjacent tokens merged → 1 span, not 2
+6. preds field filled, answer_preds absent → evaluator reads preds
+7. Legacy answer_preds via adapt_legacy_samples()
+8. len(preds) != len(offsets) → ValueError
+9. len(probs) != len(preds) → ValueError
+10. offset out of range → ValueError
+11. All-zero preds (valid) → returns 0s, no error
+12. compute_token_metrics on synthetic data
+13. compute_answer_metrics on synthetic data
+
+Pipeline frozen:
+- compute_sample_level_span_metrics reads ONLY 'preds'
+- adapt_legacy_samples() for historical answer_preds files
+- Mandatory assertions: len(probs)==len(preds), len(preds)==len(offsets), offset range
+- ValueError (no silent zeros) on bad data

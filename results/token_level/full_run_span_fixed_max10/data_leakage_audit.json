@@ -1,0 +1,14 @@
+{
+  "total_samples": 7368,
+  "exact_qa_duplicates": 118,
+  "question_duplicates": 943,
+  "answer_duplicates": 123,
+  "hallucination_spans_in_context": 46,
+  "eval_in_train": 0,
+  "high_similarity_cross_split": 0,
+  "split_counts": {
+    "train": 6268,
+    "val": 1100
+  },
+  "has_leakage": true
+}

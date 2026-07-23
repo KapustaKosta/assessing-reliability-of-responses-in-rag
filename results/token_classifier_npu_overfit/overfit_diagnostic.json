@@ -1,0 +1,11 @@
+{
+  "initial_loss": 0.6203482151031494,
+  "final_loss": 0.008565525989979506,
+  "best_token_f1": 1.0,
+  "best_span_f1": 1.0,
+  "positive_predictions": 90,
+  "negative_predictions": 255,
+  "target_token_f1": 0.95,
+  "target_span_f1": 0.95,
+  "loss_decreased": true
+}

@@ -241,3 +241,15 @@ legacy_data/
 
 # Local Phase 2 model checkpoints
 results/phase2_mil_faithfulness/*.pt
+
+# Local model checkpoints (GB-sized) — too large for GitHub (>100MB limit)
+results/**/*.pt
+results/**/*.pth
+results/**/*.bin
+results/**/*.safetensors
+results/**/best_checkpoint.pt
+results/**/best_model.pt
+results/**/best_ckpt/
+results/**/checkpoints/
+results/**/fast_v1_best.pt
+results/overnight_autorun/experiments/

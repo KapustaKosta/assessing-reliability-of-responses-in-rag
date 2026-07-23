@@ -1,0 +1,32 @@
+{
+  "start_time": "2026-07-23T02:15:00Z",
+  "end_time": "2026-07-23T04:53:00Z",
+  "total_time_minutes": 158,
+  "phases_completed": [
+    "A",
+    "B",
+    "C",
+    "D_abandoned",
+    "E"
+  ],
+  "device": "npu:0",
+  "npu_model": "Ascend910B4",
+  "branch": "chengyi/four-hour-hallucination-sprint",
+  "git_hash": "ebcaab960ed816fef97355800b2114d3eb99d774",
+  "final_model": "old_checkpoint (rescued)",
+  "best_checkpoint_used": "results/token_level/full_run_span_fixed_max10/checkpoints/best_checkpoint.pt",
+  "max_length_used": 512,
+  "threshold": 0.3,
+  "merge_gap": 1,
+  "dev_metrics": {
+    "token_auroc": 0.9639,
+    "token_f1": 0.777,
+    "char_f1": 0.7132
+  },
+  "official_test_metrics": {
+    "token_auroc": 0.7508,
+    "token_f1": 0.3096,
+    "char_f1": 0.0,
+    "answer_f1": 0.5222
+  }
+}

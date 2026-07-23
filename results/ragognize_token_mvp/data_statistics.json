@@ -1,0 +1,5 @@
+{
+  "train_samples": 6268,
+  "val_samples": 1100,
+  "train_hallucinated": 1801
+}

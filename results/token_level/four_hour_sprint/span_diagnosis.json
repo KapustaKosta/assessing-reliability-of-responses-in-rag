@@ -1,0 +1,101 @@
+[
+  {
+    "threshold": 0.05,
+    "char_f1": 0.38307371281603336,
+    "char_prec": 0.24388284725654968,
+    "char_rec": 0.8923807370562966,
+    "pred_chars": 16184,
+    "gold_chars": 4423,
+    "overlap": 3947
+  },
+  {
+    "threshold": 0.1,
+    "char_f1": 0.4037618217361442,
+    "char_prec": 0.2634445670159956,
+    "char_rec": 0.8638932851006105,
+    "pred_chars": 14504,
+    "gold_chars": 4423,
+    "overlap": 3821
+  },
+  {
+    "threshold": 0.15,
+    "char_f1": 0.4078626799557032,
+    "char_prec": 0.2700740632103835,
+    "char_rec": 0.8326927424824779,
+    "pred_chars": 13637,
+    "gold_chars": 4423,
+    "overlap": 3683
+  },
+  {
+    "threshold": 0.2,
+    "char_f1": 0.4049028896257698,
+    "char_prec": 0.2742880064179703,
+    "char_rec": 0.7730047479086593,
+    "pred_chars": 12465,
+    "gold_chars": 4423,
+    "overlap": 3419
+  },
+  {
+    "threshold": 0.3,
+    "char_f1": 0.37632729544034976,
+    "char_prec": 0.2874180083482409,
+    "char_rec": 0.5448790413746326,
+    "pred_chars": 8385,
+    "gold_chars": 4423,
+    "overlap": 2410
+  },
+  {
+    "threshold": 0.4,
+    "char_f1": 0.24870741084449158,
+    "char_prec": 0.3006410256410256,
+    "char_rec": 0.21207325344788605,
+    "pred_chars": 3120,
+    "gold_chars": 4423,
+    "overlap": 938
+  },
+  {
+    "threshold": 0.5,
+    "char_f1": 0.04183739486737115,
+    "char_prec": 0.4532710280373832,
+    "char_rec": 0.02193081618810762,
+    "pred_chars": 214,
+    "gold_chars": 4423,
+    "overlap": 97
+  },
+  {
+    "threshold": 0.6,
+    "char_f1": 0.0,
+    "char_prec": 0.0,
+    "char_rec": 0.0,
+    "pred_chars": 0,
+    "gold_chars": 4423,
+    "overlap": 0
+  },
+  {
+    "threshold": 0.7,
+    "char_f1": 0.0,
+    "char_prec": 0.0,
+    "char_rec": 0.0,
+    "pred_chars": 0,
+    "gold_chars": 4423,
+    "overlap": 0
+  },
+  {
+    "threshold": 0.8,
+    "char_f1": 0.0,
+    "char_prec": 0.0,
+    "char_rec": 0.0,
+    "pred_chars": 0,
+    "gold_chars": 4423,
+    "overlap": 0
+  },
+  {
+    "threshold": 0.9,
+    "char_f1": 0.0,
+    "char_prec": 0.0,
+    "char_rec": 0.0,
+    "pred_chars": 0,
+    "gold_chars": 4423,
+    "overlap": 0
+  }
+]

@@ -1,0 +1,65 @@
+{
+  "data_supervision_audit": {
+    "has_character_spans": false,
+    "reason": "markers column contains categorical labels like reason_hallucinated_fact, NOT character positions with start/end",
+    "markers_column_stats": {
+      "train_non_null": 89,
+      "train_total": 1450,
+      "train_percentage": 6.14
+    },
+    "marker_types": [
+      "['reason_incomplete_answer']",
+      "['reason_false_verification']",
+      "['reason_reveals_ai_identity']",
+      "['reason_hallucinated_fact']",
+      "['reason_off_topic_answer', 'reason_irrelevant_chunk_used']",
+      "['reason_incomplete_answer', 'reason_missed_chunk_conditions']",
+      "['reason_answer_for_operator']",
+      "['reason_irrelevant_chunk_used']",
+      "['reason_wrong_navigation']",
+      "['reason_chunk_fact_mixup']",
+      "['reason_missed_chunk_conditions', 'reason_reveals_ai_identity']",
+      "['reason_off_topic_answer']",
+      "['reason_answer_for_operator', 'reason_hallucinated_fact']",
+      "['reason_hallucinated_fact', 'reason_false_verification']",
+      "['reason_hallucinated_fact', 'reason_chunk_fact_mixup']",
+      "['reason_hallucinated_fact', 'reason_incomplete_answer']",
+      "['reason_hallucinated_fact', 'reason_wrong_navigation', 'reason_chunk_fact_mixup', 'reason_irrelevant_chunk_used']",
+      "['reason_chunk_fact_mixup', 'reason_irrelevant_chunk_used', 'reason_missed_chunk_conditions']",
+      "['reason_answer_for_operator', 'reason_hallucinated_fact', 'reason_irrelevant_chunk_used']",
+      "['reason_hallucinated_fact', 'reason_chunk_fact_mixup', 'reason_incomplete_answer']"
+    ],
+    "answer_level_labels": {
+      "binary_faithfulness": {
+        "True": 1059,
+        "False": 391
+      },
+      "binary_relevancy": {
+        "True": 1267,
+        "False": 183
+      },
+      "binary_reliability": {
+        "1": 1042,
+        "0": 408
+      }
+    },
+    "splits": {
+      "train": {
+        "samples": 1450,
+        "unique_questions": 1325
+      },
+      "val": {
+        "samples": 290,
+        "unique_questions": 273
+      },
+      "test": {
+        "samples": 290,
+        "unique_questions": 275
+      }
+    },
+    "route": "B",
+    "route_b_reason": "Only answer-level markers exist, no character-level spans for token supervision",
+    "can_train_token_level": false,
+    "recommendation": "Use Answer-level Claim-MIL for Faithfulness/Reliability, NOT Token-level classifier"
+  }
+}

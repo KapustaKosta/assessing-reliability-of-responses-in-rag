@@ -1,0 +1,77 @@
+{
+  "threshold": 0.37,
+  "token_metrics": {
+    "auroc": 0.7508434347663518,
+    "pr_auc": 0.3026845519807788,
+    "accuracy": 0.8252517880601372,
+    "positive_precision": 0.34443817052512704,
+    "positive_recall": 0.2497952497952498,
+    "positive_f1": 0.28957987182530265,
+    "macro_f1": 0.5949763416113398,
+    "TP": 2440,
+    "FP": 4644,
+    "FN": 7328,
+    "TN": 54098,
+    "support_positive": 9768,
+    "confusion_matrix": [
+      [
+        54098,
+        4644
+      ],
+      [
+        7328,
+        2440
+      ]
+    ]
+  },
+  "span_metrics": {
+    "character_precision": 0.0,
+    "character_recall": 0.0,
+    "character_f1": 0.0,
+    "num_gold_chars": 46012,
+    "num_pred_chars": 0,
+    "num_overlap_chars": 0
+  },
+  "answer_metrics": {
+    "precision": 0.5280898876404494,
+    "recall": 0.47157190635451507,
+    "f1": 0.49823321554770317,
+    "accuracy": 0.7418181818181818
+  },
+  "source_model_metrics": {
+    "Llama-2-7b-chat-hf": {
+      "n_samples": 275,
+      "n_tokens": 24675,
+      "token_f1": 0.325809029165002,
+      "auroc": 0,
+      "prec": 0.380718954248366,
+      "rec": 0.2847416201117318
+    },
+    "Llama-3.1-8B-Instruct": {
+      "n_samples": 275,
+      "n_tokens": 13323,
+      "token_f1": 0.044897959183673466,
+      "auroc": 0,
+      "prec": 0.04700854700854701,
+      "rec": 0.04296875
+    },
+    "Mistral-7B-Instruct-v0.1": {
+      "n_samples": 275,
+      "n_tokens": 13712,
+      "token_f1": 0.2684863523573201,
+      "auroc": 0,
+      "prec": 0.36308724832214767,
+      "rec": 0.21299212598425196
+    },
+    "Mistral-7B-Instruct-v0.3": {
+      "n_samples": 275,
+      "n_tokens": 16800,
+      "token_f1": 0.22155172413793103,
+      "auroc": 0,
+      "prec": 0.23884758364312267,
+      "rec": 0.20659163987138263
+    }
+  },
+  "n_samples": 1100,
+  "n_tokens": 68510
+}

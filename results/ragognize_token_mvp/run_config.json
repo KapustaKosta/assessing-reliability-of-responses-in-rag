@@ -1,0 +1,8 @@
+{
+  "model_name": "mDeBERTa-v3-base-mnli-xnli",
+  "model_path": "/home/ma-user/work/models/mDeBERTa-v3-base-mnli-xnli",
+  "max_length": 512,
+  "batch_size": 2,
+  "device": "cpu",
+  "seed": 42
+}

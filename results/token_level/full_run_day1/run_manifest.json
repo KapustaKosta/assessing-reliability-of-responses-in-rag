@@ -1,0 +1,127 @@
+{
+  "timestamp": "2026-07-22T22:38:12.799983",
+  "git_branch": "feat/ragognize-token-level",
+  "git_commit": "ebcaab9",
+  "files": [
+    {
+      "path": "results/token_level/full_run_day1/all_results_table.csv",
+      "size_bytes": 2429,
+      "sha256_prefix": "665446914a122eae"
+    },
+    {
+      "path": "results/token_level/full_run_day1/checkpoints/best_checkpoint.pt",
+      "size_bytes": 3347440289,
+      "sha256_prefix": "dd47eec510178c55"
+    },
+    {
+      "path": "results/token_level/full_run_day1/checkpoints/config.json",
+      "size_bytes": 640,
+      "sha256_prefix": "fe12b8b6964bfdf9"
+    },
+    {
+      "path": "results/token_level/full_run_day1/checkpoints/epoch_0_checkpoint.pt",
+      "size_bytes": 3347440289,
+      "sha256_prefix": "906f9cd8ebb27613"
+    },
+    {
+      "path": "results/token_level/full_run_day1/checkpoints/epoch_1_checkpoint.pt",
+      "size_bytes": 3347440289,
+      "sha256_prefix": "ea4316b14ce10818"
+    },
+    {
+      "path": "results/token_level/full_run_day1/checkpoints/epoch_2_checkpoint.pt",
+      "size_bytes": 3347440289,
+      "sha256_prefix": "dd47eec510178c55"
+    },
+    {
+      "path": "results/token_level/full_run_day1/config_resolved.json",
+      "size_bytes": 1842,
+      "sha256_prefix": "92bd0e87737ac949"
+    },
+    {
+      "path": "results/token_level/full_run_day1/dev_best_metrics.json",
+      "size_bytes": 394,
+      "sha256_prefix": "c5b6e614db92a640"
+    },
+    {
+      "path": "results/token_level/full_run_day1/dev_predictions_raw.csv",
+      "size_bytes": 116456,
+      "sha256_prefix": "de9def6762897a35"
+    },
+    {
+      "path": "results/token_level/full_run_day1/dev_probabilities.npz",
+      "size_bytes": 1093356,
+      "sha256_prefix": "b4a1c4fee8457201"
+    },
+    {
+      "path": "results/token_level/full_run_day1/dev_threshold_sweep.csv",
+      "size_bytes": 2109,
+      "sha256_prefix": "7c504dcd22d444a1"
+    },
+    {
+      "path": "results/token_level/full_run_day1/epoch_metrics.csv",
+      "size_bytes": 1080,
+      "sha256_prefix": "0ee252a7d202902d"
+    },
+    {
+      "path": "results/token_level/full_run_day1/error_analysis.csv",
+      "size_bytes": 1064676,
+      "sha256_prefix": "f30dc4b712231859"
+    },
+    {
+      "path": "results/token_level/full_run_day1/final_report.md",
+      "size_bytes": 6486,
+      "sha256_prefix": "589f378a3c5ad661"
+    },
+    {
+      "path": "results/token_level/full_run_day1/frozen_decision.json",
+      "size_bytes": 1371,
+      "sha256_prefix": "4e1af56eded85320"
+    },
+    {
+      "path": "results/token_level/full_run_day1/run_pipeline.py",
+      "size_bytes": 48344,
+      "sha256_prefix": "57ac75606e9513f5"
+    },
+    {
+      "path": "results/token_level/full_run_day1/sample_predictions.md",
+      "size_bytes": 18994,
+      "sha256_prefix": "4863026056c33c35"
+    },
+    {
+      "path": "results/token_level/full_run_day1/split_audit.json",
+      "size_bytes": 340,
+      "sha256_prefix": "77e494c6c41ac5ba"
+    },
+    {
+      "path": "results/token_level/full_run_day1/test_group_metrics.csv",
+      "size_bytes": 283,
+      "sha256_prefix": "ba712dca165f310a"
+    },
+    {
+      "path": "results/token_level/full_run_day1/test_metrics_frozen.json",
+      "size_bytes": 656,
+      "sha256_prefix": "c8980a108824976d"
+    },
+    {
+      "path": "results/token_level/full_run_day1/test_predictions.csv",
+      "size_bytes": 686595,
+      "sha256_prefix": "555c862e97d6e165"
+    },
+    {
+      "path": "results/token_level/full_run_day1/train.log",
+      "size_bytes": 4781510,
+      "sha256_prefix": "e60cc9e79d8727b1"
+    },
+    {
+      "path": "results/token_level/full_run_day1/training_history.jsonl",
+      "size_bytes": 1660,
+      "sha256_prefix": "d6566201b946e215"
+    },
+    {
+      "path": "results/token_level/full_run_day1/training_summary.json",
+      "size_bytes": 2376,
+      "sha256_prefix": "a9382c6bf4aaf381"
+    }
+  ]
+}

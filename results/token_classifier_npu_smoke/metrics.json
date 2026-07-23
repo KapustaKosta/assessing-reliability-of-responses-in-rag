@@ -1,0 +1,5 @@
+{
+  "best_metric": 0.0,
+  "best_metric_name": "span_f1",
+  "total_epochs": 3
+}

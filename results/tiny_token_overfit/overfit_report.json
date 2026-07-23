@@ -1,0 +1,13 @@
+{
+  "initial_loss": 0.7417784810066224,
+  "best_loss": 0.00363715483690612,
+  "best_token_f1": 0.9983646770237121,
+  "best_char_f1": 0.9955447549615228,
+  "best_epoch": 29,
+  "loss_decreased": true,
+  "params_changed": 0,
+  "nan_inf": true,
+  "checkpoint_reload_ok": true,
+  "params_changed_vs_initial": 200,
+  "params_total": 200
+}

@@ -1,0 +1,70 @@
+{
+  "threshold": 0.3,
+  "merge_gap": 1,
+  "token_metrics": {
+    "auroc": 0.7508434347663518,
+    "pr_auc": 0.3026845519807788,
+    "accuracy": 0.8216610713764414,
+    "positive_precision": 0.3455233291298865,
+    "positive_recall": 0.2805077805077805,
+    "positive_f1": 0.3096395072889592,
+    "TP": 2740,
+    "FP": 5190,
+    "FN": 7028,
+    "TN": 53552,
+    "gold_positive_rate": 0.14257772587943365,
+    "predicted_positive_rate": 0.1157495256166983
+  },
+  "span_metrics": {
+    "character_precision": 0.0,
+    "character_recall": 0.0,
+    "character_f1": 0.0,
+    "num_gold_chars": 46012,
+    "num_pred_chars": 0,
+    "num_overlap_chars": 0
+  },
+  "answer_metrics": {
+    "precision": 0.5331010452961672,
+    "recall": 0.5117056856187291,
+    "f1": 0.5221843003412969,
+    "accuracy": 0.7454545454545455,
+    "gold_positive_rate": 0.2718181818181818,
+    "predicted_positive_rate": 0.2609090909090909
+  },
+  "source_model_metrics": {
+    "Llama-2-7b-chat-hf": {
+      "n_samples": 275,
+      "n_tokens": 24675,
+      "token_f1": 0.3441833590138675,
+      "token_prec": 0.38380584192439865,
+      "token_rec": 0.3119762569832402,
+      "auroc": 0
+    },
+    "Llama-3.1-8B-Instruct": {
+      "n_samples": 275,
+      "n_tokens": 13323,
+      "token_f1": 0.05904059040590406,
+      "token_prec": 0.055944055944055944,
+      "token_rec": 0.0625,
+      "auroc": 0
+    },
+    "Mistral-7B-Instruct-v0.1": {
+      "n_samples": 275,
+      "n_tokens": 13712,
+      "token_f1": 0.2907801418439716,
+      "token_prec": 0.363905325443787,
+      "token_rec": 0.2421259842519685,
+      "auroc": 0
+    },
+    "Mistral-7B-Instruct-v0.3": {
+      "n_samples": 275,
+      "n_tokens": 16800,
+      "token_f1": 0.25334382376081827,
+      "token_prec": 0.24807395993836673,
+      "token_rec": 0.25884244372990356,
+      "auroc": 0
+    }
+  },
+  "n_samples": 1100,
+  "n_tokens": 68510
+}

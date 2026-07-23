@@ -1,0 +1,56 @@
+{
+  "split_info": {
+    "train_prompts": 802,
+    "val_prompts": 141,
+    "test_prompts": 1416,
+    "val_ratio": 0.15,
+    "seed": 42
+  },
+  "expanded_sample_counts": {
+    "train": 6268,
+    "val": 1100,
+    "test": 11124
+  },
+  "prompt_level_stats": {
+    "train": {
+      "hallucinated": 1801,
+      "faithful": 4467,
+      "total": 6268
+    },
+    "val": {
+      "hallucinated": 304,
+      "faithful": 796,
+      "total": 1100
+    },
+    "test": {
+      "hallucinated": 3194,
+      "faithful": 7930,
+      "total": 11124
+    }
+  },
+  "model_distribution": {
+    "train": {
+      "Llama-2-7b-chat-hf": 1567,
+      "Llama-3.1-8B-Instruct": 1567,
+      "Mistral-7B-Instruct-v0.1": 1567,
+      "Mistral-7B-Instruct-v0.3": 1567
+    },
+    "val": {
+      "Llama-2-7b-chat-hf": 275,
+      "Llama-3.1-8B-Instruct": 275,
+      "Mistral-7B-Instruct-v0.1": 275,
+      "Mistral-7B-Instruct-v0.3": 275
+    },
+    "test": {
+      "Llama-2-7b-chat-hf": 2781,
+      "Llama-3.1-8B-Instruct": 2781,
+      "Mistral-7B-Instruct-v0.1": 2781,
+      "Mistral-7B-Instruct-v0.3": 2781
+    }
+  },
+  "faithfulness_rate": {
+    "train": 0.7126675175494576,
+    "val": 0.7236363636363636,
+    "test": 0.7128730672419993
+  }
+}

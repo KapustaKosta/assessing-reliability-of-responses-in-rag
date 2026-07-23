@@ -1,0 +1,2 @@
+source_model,n_samples,gold_pos_prevalence,token_precision,token_recall,token_f1,char_precision,char_recall,char_f1,ans_precision,ans_recall,ans_f1,predicted_positive_rate,max_prob_P10,max_prob_P25,max_prob_P50,max_prob_P75,max_prob_P90
+unknown,1256,0.1749,0.2628,0.7299,0.3864,0.4751,0.3223,0.3841,0.4055,0.8196,0.5426,0.4858,0.0354,0.0695,0.2789,0.3905,0.4658

@@ -1,0 +1,13 @@
+{
+  "train_samples": 60,
+  "dev_samples": 0,
+  "test_samples": 0,
+  "unique_train_qids": 1,
+  "unique_dev_qids": 0,
+  "unique_test_qids": 0,
+  "train_dev_overlap": 0,
+  "train_test_overlap": 0,
+  "dev_test_overlap": 0,
+  "has_leakage": false,
+  "train_positive_rate": 0.5
+}

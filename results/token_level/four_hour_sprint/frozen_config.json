@@ -1,0 +1,17 @@
+{
+  "checkpoint": "results/token_level/full_run_span_fixed_max10/checkpoints/best_checkpoint.pt",
+  "epoch": 3,
+  "tokenizer": "/home/ma-user/work/models/mDeBERTa-v3-base-mnli-xnli",
+  "max_length": 512,
+  "context_max_length": 400,
+  "context_stride": 128,
+  "threshold": 0.3,
+  "merge_gap": 1,
+  "min_span_chars": 1,
+  "training_config": {
+    "positive_class_weight": 3.0,
+    "encoder_lr": 1e-05,
+    "learning_rate": 0.0005
+  },
+  "seed": 42
+}

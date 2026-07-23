@@ -1,0 +1,25 @@
+{
+  "token": {
+    "accuracy": 0.8159,
+    "positive_precision": 0.4157,
+    "positive_recall": 0.3643,
+    "positive_f1": 0.3883,
+    "auroc": 0.7648,
+    "pr_auc": 0.3531
+  },
+  "character": {
+    "character_precision": 0.0,
+    "character_recall": 0.0,
+    "character_f1": 0.0
+  },
+  "answer": {
+    "accuracy": 0.7615,
+    "macro_f1": 0.5709,
+    "unfaithful_precision": 0.6436,
+    "unfaithful_recall": 0.513,
+    "unfaithful_f1": 0.5709
+  },
+  "frozen_threshold": 0.9,
+  "frozen_checkpoint": "/home/ma-user/work/assessing-reliability-of-responses-in-rag/results/token_level/full_run_day1/checkpoints/epoch_2_checkpoint.pt",
+  "n_test_samples": 1100
+}

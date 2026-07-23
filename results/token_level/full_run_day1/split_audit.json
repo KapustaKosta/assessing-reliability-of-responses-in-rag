@@ -1,0 +1,14 @@
+{
+  "train_samples": 5012,
+  "dev_samples": 2512,
+  "test_samples": 0,
+  "unique_train_qids": 642,
+  "unique_dev_qids": 160,
+  "unique_test_qids": 0,
+  "train_dev_overlap": 0,
+  "train_test_overlap": 0,
+  "dev_test_overlap": 0,
+  "has_leakage": false,
+  "train_positive_rate": 0.2841181165203512,
+  "dev_positive_rate": 0.3001592356687898
+}

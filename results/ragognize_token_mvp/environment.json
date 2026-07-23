@@ -1,0 +1,6 @@
+{
+  "torch_version": "2.13.0+cu130",
+  "device": "cpu",
+  "gpu_available": false,
+  "npu_available": false
+}

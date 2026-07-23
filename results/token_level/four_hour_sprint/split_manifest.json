@@ -1,0 +1,8 @@
+{
+  "train_samples": 5012,
+  "dev_samples": 1256,
+  "test_samples": 1100,
+  "seed": 42,
+  "dev_fraction": 0.2,
+  "split_by": "question_id"
+}

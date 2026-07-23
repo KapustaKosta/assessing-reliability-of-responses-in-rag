@@ -1,0 +1,486 @@
+Device: NPU
+
+Total val samples: 1100, with gold spans: 304
+
+======================================================================
+CHECK 1: Gold span coordinate system
+======================================================================
+  Sample 0: span=[388:467] len=79 text='there is no mention of Milchick or any affection towards Sar'  in_answer=True
+  Sample 1: span=[249:386] len=137 text='He also described Bock as a "new manager who happens to be a'  in_answer=True
+  Sample 2: span=[0:140] len=140 text="No, Alan Sepinwall did not observe that Tramell Tillman's po"  in_answer=True
+
+======================================================================
+CHECK 2: Tokenizer offset coordinate system (pair encoding)
+======================================================================
+  Q+C offsets[:6]: [(0, 0), (0, 4), (4, 7), (7, 11), (11, 17), (17, 18)]
+  Context offsets[:3]: [(0, 3), (3, 9), (9, 12)]
+  Answer offsets[:3]: [(0, 3), (3, 9), (9, 18)]
+  Answer text: 'The movie features WALL-E.'
+  Answer token[0] offset: (0, 3) -> 'The'
+  CONCLUSION: Pair encoding uses per-sequence offsets (context starts at 0, answer starts at 0)
+
+======================================================================
+CHECK 3: Model & Training Format
+======================================================================
+  Encoder: odict_keys(['embeddings.word_embeddings.weight', 'embeddings.LayerNorm.weight', 'embeddings.LayerNorm.bias', 'encoder.layer.0.attention.self.query_proj.weight', 'encoder.layer.0.attention.self.query_proj.bias', 'encoder.layer.0.attention.self.key_proj.weight', 'encoder.layer.0.attention.self.key_proj.bias', 'encoder.layer.0.attention.self.value_proj.weight', 'encoder.layer.0.attention.self.value_proj.bias', 'encoder.layer.0.attention.output.dense.weight', 'encoder.layer.0.attention.output.dense.bias', 'encoder.layer.0.attention.output.LayerNorm.weight', 'encoder.layer.0.attention.output.LayerNorm.bias', 'encoder.layer.0.intermediate.dense.weight', 'encoder.layer.0.intermediate.dense.bias', 'encoder.layer.0.output.dense.weight', 'encoder.layer.0.output.dense.bias', 'encoder.layer.0.output.LayerNorm.weight', 'encoder.layer.0.output.LayerNorm.bias', 'encoder.layer.1.attention.self.query_proj.weight', 'encoder.layer.1.attention.self.query_proj.bias', 'encoder.layer.1.attention.self.key_proj.weight', 'encoder.layer.1.attention.self.key_proj.bias', 'encoder.layer.1.attention.self.value_proj.weight', 'encoder.layer.1.attention.self.value_proj.bias', 'encoder.layer.1.attention.output.dense.weight', 'encoder.layer.1.attention.output.dense.bias', 'encoder.layer.1.attention.output.LayerNorm.weight', 'encoder.layer.1.attention.output.LayerNorm.bias', 'encoder.layer.1.intermediate.dense.weight', 'encoder.layer.1.intermediate.dense.bias', 'encoder.layer.1.output.dense.weight', 'encoder.layer.1.output.dense.bias', 'encoder.layer.1.output.LayerNorm.weight', 'encoder.layer.1.output.LayerNorm.bias', 'encoder.layer.2.attention.self.query_proj.weight', 'encoder.layer.2.attention.self.query_proj.bias', 'encoder.layer.2.attention.self.key_proj.weight', 'encoder.layer.2.attention.self.key_proj.bias', 'encoder.layer.2.attention.self.value_proj.weight', 'encoder.layer.2.attention.self.value_proj.bias', 'encoder.layer.2.attention.output.dense.weight', 'encoder.layer.2.attention.output.dense.bias', 'encoder.layer.2.attention.output.LayerNorm.weight', 'encoder.layer.2.attention.output.LayerNorm.bias', 'encoder.layer.2.intermediate.dense.weight', 'encoder.layer.2.intermediate.dense.bias', 'encoder.layer.2.output.dense.weight', 'encoder.layer.2.output.dense.bias', 'encoder.layer.2.output.LayerNorm.weight', 'encoder.layer.2.output.LayerNorm.bias', 'encoder.layer.3.attention.self.query_proj.weight', 'encoder.layer.3.attention.self.query_proj.bias', 'encoder.layer.3.attention.self.key_proj.weight', 'encoder.layer.3.attention.self.key_proj.bias', 'encoder.layer.3.attention.self.value_proj.weight', 'encoder.layer.3.attention.self.value_proj.bias', 'encoder.layer.3.attention.output.dense.weight', 'encoder.layer.3.attention.output.dense.bias', 'encoder.layer.3.attention.output.LayerNorm.weight', 'encoder.layer.3.attention.output.LayerNorm.bias', 'encoder.layer.3.intermediate.dense.weight', 'encoder.layer.3.intermediate.dense.bias', 'encoder.layer.3.output.dense.weight', 'encoder.layer.3.output.dense.bias', 'encoder.layer.3.output.LayerNorm.weight', 'encoder.layer.3.output.LayerNorm.bias', 'encoder.layer.4.attention.self.query_proj.weight', 'encoder.layer.4.attention.self.query_proj.bias', 'encoder.layer.4.attention.self.key_proj.weight', 'encoder.layer.4.attention.self.key_proj.bias', 'encoder.layer.4.attention.self.value_proj.weight', 'encoder.layer.4.attention.self.value_proj.bias', 'encoder.layer.4.attention.output.dense.weight', 'encoder.layer.4.attention.output.dense.bias', 'encoder.layer.4.attention.output.LayerNorm.weight', 'encoder.layer.4.attention.output.LayerNorm.bias', 'encoder.layer.4.intermediate.dense.weight', 'encoder.layer.4.intermediate.dense.bias', 'encoder.layer.4.output.dense.weight', 'encoder.layer.4.output.dense.bias', 'encoder.layer.4.output.LayerNorm.weight', 'encoder.layer.4.output.LayerNorm.bias', 'encoder.layer.5.attention.self.query_proj.weight', 'encoder.layer.5.attention.self.query_proj.bias', 'encoder.layer.5.attention.self.key_proj.weight', 'encoder.layer.5.attention.self.key_proj.bias', 'encoder.layer.5.attention.self.value_proj.weight', 'encoder.layer.5.attention.self.value_proj.bias', 'encoder.layer.5.attention.output.dense.weight', 'encoder.layer.5.attention.output.dense.bias', 'encoder.layer.5.attention.output.LayerNorm.weight', 'encoder.layer.5.attention.output.LayerNorm.bias', 'encoder.layer.5.intermediate.dense.weight', 'encoder.layer.5.intermediate.dense.bias', 'encoder.layer.5.output.dense.weight', 'encoder.layer.5.output.dense.bias', 'encoder.layer.5.output.LayerNorm.weight', 'encoder.layer.5.output.LayerNorm.bias', 'encoder.layer.6.attention.self.query_proj.weight', 'encoder.layer.6.attention.self.query_proj.bias', 'encoder.layer.6.attention.self.key_proj.weight', 'encoder.layer.6.attention.self.key_proj.bias', 'encoder.layer.6.attention.self.value_proj.weight', 'encoder.layer.6.attention.self.value_proj.bias', 'encoder.layer.6.attention.output.dense.weight', 'encoder.layer.6.attention.output.dense.bias', 'encoder.layer.6.attention.output.LayerNorm.weight', 'encoder.layer.6.attention.output.LayerNorm.bias', 'encoder.layer.6.intermediate.dense.weight', 'encoder.layer.6.intermediate.dense.bias', 'encoder.layer.6.output.dense.weight', 'encoder.layer.6.output.dense.bias', 'encoder.layer.6.output.LayerNorm.weight', 'encoder.layer.6.output.LayerNorm.bias', 'encoder.layer.7.attention.self.query_proj.weight', 'encoder.layer.7.attention.self.query_proj.bias', 'encoder.layer.7.attention.self.key_proj.weight', 'encoder.layer.7.attention.self.key_proj.bias', 'encoder.layer.7.attention.self.value_proj.weight', 'encoder.layer.7.attention.self.value_proj.bias', 'encoder.layer.7.attention.output.dense.weight', 'encoder.layer.7.attention.output.dense.bias', 'encoder.layer.7.attention.output.LayerNorm.weight', 'encoder.layer.7.attention.output.LayerNorm.bias', 'encoder.layer.7.intermediate.dense.weight', 'encoder.layer.7.intermediate.dense.bias', 'encoder.layer.7.output.dense.weight', 'encoder.layer.7.output.dense.bias', 'encoder.layer.7.output.LayerNorm.weight', 'encoder.layer.7.output.LayerNorm.bias', 'encoder.layer.8.attention.self.query_proj.weight', 'encoder.layer.8.attention.self.query_proj.bias', 'encoder.layer.8.attention.self.key_proj.weight', 'encoder.layer.8.attention.self.key_proj.bias', 'encoder.layer.8.attention.self.value_proj.weight', 'encoder.layer.8.attention.self.value_proj.bias', 'encoder.layer.8.attention.output.dense.weight', 'encoder.layer.8.attention.output.dense.bias', 'encoder.layer.8.attention.output.LayerNorm.weight', 'encoder.layer.8.attention.output.LayerNorm.bias', 'encoder.layer.8.intermediate.dense.weight', 'encoder.layer.8.intermediate.dense.bias', 'encoder.layer.8.output.dense.weight', 'encoder.layer.8.output.dense.bias', 'encoder.layer.8.output.LayerNorm.weight', 'encoder.layer.8.output.LayerNorm.bias', 'encoder.layer.9.attention.self.query_proj.weight', 'encoder.layer.9.attention.self.query_proj.bias', 'encoder.layer.9.attention.self.key_proj.weight', 'encoder.layer.9.attention.self.key_proj.bias', 'encoder.layer.9.attention.self.value_proj.weight', 'encoder.layer.9.attention.self.value_proj.bias', 'encoder.layer.9.attention.output.dense.weight', 'encoder.layer.9.attention.output.dense.bias', 'encoder.layer.9.attention.output.LayerNorm.weight', 'encoder.layer.9.attention.output.LayerNorm.bias', 'encoder.layer.9.intermediate.dense.weight', 'encoder.layer.9.intermediate.dense.bias', 'encoder.layer.9.output.dense.weight', 'encoder.layer.9.output.dense.bias', 'encoder.layer.9.output.LayerNorm.weight', 'encoder.layer.9.output.LayerNorm.bias', 'encoder.layer.10.attention.self.query_proj.weight', 'encoder.layer.10.attention.self.query_proj.bias', 'encoder.layer.10.attention.self.key_proj.weight', 'encoder.layer.10.attention.self.key_proj.bias', 'encoder.layer.10.attention.self.value_proj.weight', 'encoder.layer.10.attention.self.value_proj.bias', 'encoder.layer.10.attention.output.dense.weight', 'encoder.layer.10.attention.output.dense.bias', 'encoder.layer.10.attention.output.LayerNorm.weight', 'encoder.layer.10.attention.output.LayerNorm.bias', 'encoder.layer.10.intermediate.dense.weight', 'encoder.layer.10.intermediate.dense.bias', 'encoder.layer.10.output.dense.weight', 'encoder.layer.10.output.dense.bias', 'encoder.layer.10.output.LayerNorm.weight', 'encoder.layer.10.output.LayerNorm.bias', 'encoder.layer.11.attention.self.query_proj.weight', 'encoder.layer.11.attention.self.query_proj.bias', 'encoder.layer.11.attention.self.key_proj.weight', 'encoder.layer.11.attention.self.key_proj.bias', 'encoder.layer.11.attention.self.value_proj.weight', 'encoder.layer.11.attention.self.value_proj.bias', 'encoder.layer.11.attention.output.dense.weight', 'encoder.layer.11.attention.output.dense.bias', 'encoder.layer.11.attention.output.LayerNorm.weight', 'encoder.layer.11.attention.output.LayerNorm.bias', 'encoder.layer.11.intermediate.dense.weight', 'encoder.layer.11.intermediate.dense.bias', 'encoder.layer.11.output.dense.weight', 'encoder.layer.11.output.dense.bias', 'encoder.layer.11.output.LayerNorm.weight', 'encoder.layer.11.output.LayerNorm.bias', 'encoder.rel_embeddings.weight', 'encoder.LayerNorm.weight', 'encoder.LayerNorm.bias'])
+  Classifier: ['weight', 'bias']
+  Config keys: ['batch_size', 'context_aggregation', 'context_max_length', 'context_stride', 'device', 'dropout', 'encoder_lr', 'encoder_name', 'epochs', 'gradient_accumulation_steps', 'hidden_size', 'learning_rate', 'max_grad_norm', 'max_length', 'model_path', 'patience', 'positive_class_weight', 'seed', 'threshold_metric', 'threshold_search_max', 'threshold_search_min', 'threshold_search_step', 'weight_decay']
+  Train AUROC progression: see epoch_metrics.csv
+  Best epoch: 3, best_char_f1: 0.9378902215481386
+
+======================================================================
+CHECK 4: Dataset tokenization (max_length=768)
+======================================================================
+
+  --- max_len=768 ---
+    Sample 0: ans_len=1293, cnt=337, max_off=1293, coverage=100.0%, gold_covered=79/79, special(0,0)=0/337
+    Sample 1: ans_len=386, cnt=107, max_off=386, coverage=100.0%, gold_covered=137/137, special(0,0)=0/107
+    Sample 2: ans_len=140, cnt=37, max_off=140, coverage=100.0%, gold_covered=140/140, special(0,0)=0/37
+    Sample 3: ans_len=807, cnt=206, max_off=807, coverage=100.0%, gold_covered=130/130, special(0,0)=0/206
+    Sample 4: ans_len=427, cnt=106, max_off=427, coverage=100.0%, gold_covered=427/427, special(0,0)=0/106
+
+  --- max_len=512 ---
+    Sample 0: ans_len=1293, cnt=111, max_off=439, coverage=34.0%, gold_covered=51/79, special(0,0)=0/111
+    Sample 1: ans_len=386, cnt=107, max_off=386, coverage=100.0%, gold_covered=137/137, special(0,0)=0/107
+    Sample 2: ans_len=140, cnt=37, max_off=140, coverage=100.0%, gold_covered=140/140, special(0,0)=0/37
+    Sample 3: ans_len=807, cnt=111, max_off=426, coverage=52.8%, gold_covered=0/130, special(0,0)=0/111
+    Sample 4: ans_len=427, cnt=106, max_off=427, coverage=100.0%, gold_covered=427/427, special(0,0)=0/106
+
+======================================================================
+CHECK 5: Model predictions (max_length=768, threshold=0.5)
+======================================================================
+
+  SAMPLE 0: answer_len=1293, gold_spans=[{'start': 388, 'end': 467}]
+    asi=400, cnt=337, gold_chars=79
+     TOKEN  GIDX    LOGIT    PROB PRED GOLD     A-OFFSET               A-TEXT NOTE
+    ------------------------------------------------------------------------------------------
+       0(400)   1.0863  1.0863    1    0 (    1,    2) B                    <<<PRED
+       1(401)   0.6853  0.6853    1    0 (    1,    6) Based                <<<PRED
+       2(402)   0.9673  0.9673    1    0 (    6,    9)  on                  <<<PRED
+       3(403)   1.1160  1.1160    1    0 (    9,   13)  the                 <<<PRED
+       4(404)   1.3430  1.3430    1    0 (   13,   14)                      <<<PRED
+       5(405)   1.2545  1.2545    1    0 (   14,   22) provided             <<<PRED
+       6(406)   0.8341  0.8341    1    0 (   22,   32)  documents           <<<PRED
+       7(407)   1.2314  1.2314    1    0 (   32,   33) ,                    <<<PRED
+       8(408)   0.8210  0.8210    1    0 (   33,   38)  Alan                <<<PRED
+       9(409)   0.9540  0.9540    1    0 (   38,   42)  Sep                 <<<PRED
+      10(410)   1.2637  1.2637    1    0 (   42,   44) in                   <<<PRED
+      11(411)   1.1581  1.1581    1    0 (   44,   48) wall                 <<<PRED
+      12(412)   1.0801  1.0801    1    0 (   48,   52)  did                 <<<PRED
+      13(413)   0.4881  0.4881    0    0 (   52,   56)  not                 
+      14(414)   0.8629  0.8629    1    0 (   56,   64)  observe             <<<PRED
+      15(415)   1.0998  1.0998    1    0 (   64,   67)  or                  <<<PRED
+      16(416)   0.9845  0.9845    1    0 (   67,   75)  mention             <<<PRED
+      17(417)   0.7446  0.7446    1    0 (   75,   79)  any                 <<<PRED
+      18(418)   0.9900  0.9900    1    0 (   79,   82)  af                  <<<PRED
+      19(419)   0.9633  0.9633    1    0 (   82,   89) fection              <<<PRED
+      20(420)   1.1757  1.1757    1    0 (   89,   92)  to                  <<<PRED
+      21(421)   1.0983  1.0983    1    0 (   92,   97) wards                <<<PRED
+      22(422)   1.0206  1.0206    1    0 (   97,  103)  Sarah               <<<PRED
+      23(423)   1.0919  1.0919    1    0 (  103,  107)  Boc                 <<<PRED
+      24(424)   1.4143  1.4143    1    0 (  107,  108) k                    <<<PRED
+      25(425)   1.4126  1.4126    1    0 (  108,  109) '                    <<<PRED
+      26(426)   1.5062  1.5062    1    0 (  109,  110) s                    <<<PRED
+      27(427)   1.2099  1.2099    1    0 (  110,  120)  character           <<<PRED
+      28(428)   1.5573  1.5573    1    0 (  120,  123)  by                  <<<PRED
+      29(429)   1.0939  1.0939    1    0 (  123,  128)  Tram                <<<PRED
+      30(430)   1.2168  1.2168    1    0 (  128,  131) ell                  <<<PRED
+      31(431)   1.0560  1.0560    1    0 (  131,  136)  Till                <<<PRED
+      32(432)   1.1691  1.1691    1    0 (  136,  139) man                  <<<PRED
+      33(433)   1.2926  1.2926    1    0 (  139,  140) '                    <<<PRED
+      34(434)   1.4346  1.4346    1    0 (  140,  141) s                    <<<PRED
+      35(435)   1.3096  1.3096    1    0 (  141,  145)  por                 <<<PRED
+      36(436)   1.3820  1.3820    1    0 (  145,  149) tray                 <<<PRED
+      37(437)   1.5118  1.5118    1    0 (  149,  151) al                   <<<PRED
+      38(438)   1.3667  1.3667    1    0 (  151,  154)  of                  <<<PRED
+      39(439)   1.6090  1.6090    1    0 (  154,  158)  Mil                 <<<PRED
+      40(440)   1.6032  1.6032    1    0 (  158,  163) chick                <<<PRED
+      41(441)   1.3079  1.3079    1    0 (  163,  164) .                    <<<PRED
+      42(442)   0.9228  0.9228    1    0 (  164,  167)  In                  <<<PRED
+      43(443)   0.9911  0.9911    1    0 (  167,  172)  fact                <<<PRED
+      44(444)   1.4278  1.4278    1    0 (  172,  173) ,                    <<<PRED
+      45(445)   0.8157  0.8157    1    0 (  173,  177)  the                 <<<PRED
+      46(446)   1.1933  1.1933    1    0 (  177,  187)  documents           <<<PRED
+      47(447)   1.0043  1.0043    1    0 (  187,  195)  suggest             <<<PRED
+      48(448)   0.6431  0.6431    1    0 (  195,  199)  the                 <<<PRED
+      49(449)   0.0731  0.0731    0    0 (  199,  207)  opposit             
+      50(450)   0.8086  0.8086    1    0 (  207,  208) e                    <<<PRED
+      51(451)   1.2828  1.2828    1    0 (  208,  209) ,                    <<<PRED
+      52(452)   1.5012  1.5012    1    0 (  209,  214)  with                <<<PRED
+      53(453)   1.1574  1.1574    1    0 (  214,  218)  Sep                 <<<PRED
+      54(454)   1.3687  1.3687    1    0 (  218,  220) in                   <<<PRED
+      55(455)   1.3466  1.3466    1    0 (  220,  224) wall                 <<<PRED
+      56(456)   1.2591  1.2591    1    0 (  224,  232)  describ             <<<PRED
+      57(457)   1.4287  1.4287    1    0 (  232,  235) ing                  <<<PRED
+      58(458)   0.9951  0.9951    1    0 (  235,  236)                      <<<PRED
+      59(459)   1.2946  1.2946    1    0 (  236,  237) a                    <<<PRED
+      60(460)   0.9024  0.9024    1    0 (  237,  241)  con                 <<<PRED
+      61(461)   0.8748  0.8748    1    0 (  241,  248) tention              <<<PRED
+      62(462)   0.8338  0.8338    1    0 (  248,  249)                      <<<PRED
+      63(463)   1.2047  1.2047    1    0 (  249,  256) between              <<<PRED
+      64(464)   1.0888  1.0888    1    0 (  256,  260)  the                 <<<PRED
+      65(465)   0.7659  0.7659    1    0 (  260,  264)  two                 <<<PRED
+      66(466)   0.7120  0.7120    1    0 (  264,  275)  characters          <<<PRED
+      67(467)   0.8045  0.8045    1    0 (  275,  276) .                    <<<PRED
+      68(468)   0.7664  0.7664    1    0 (  277,  280) 
+In                  <<<PRED
+      69(469)   0.9885  0.9885    1    0 (  280,  284)  the                 <<<PRED
+      70(470)   1.1349  1.1349    1    0 (  284,  293)  document            <<<PRED
+      71(471)   0.9495  0.9495    1    0 (  293,  294)                      <<<PRED
+      72(472)   0.9551  0.9551    1    0 (  294,  300) titled               <<<PRED
+      73(473)   1.0753  1.0753    1    0 (  300,  302)  "                   <<<PRED
+      74(474)   1.1697  1.1697    1    0 (  302,  303) E                    <<<PRED
+      75(475)   1.1517  1.1517    1    0 (  303,  305) us                   <<<PRED
+      76(476)   1.2231  1.2231    1    0 (  305,  309) tice                 <<<PRED
+      77(477)   1.2113  1.2113    1    0 (  309,  315)  Huang               <<<PRED
+      78(478)   0.8407  0.8407    1    0 (  315,  317) ,"                   <<<PRED
+      79(479)   1.0267  1.0267    1    0 (  317,  320)  it                  <<<PRED
+    --- SUMMARY: gold=79, pred=1274, overlap=79
+    --- Recall=100.00%, Precision=6.20%, F1=11.68%
+    --- Predicted positive tokens at t=0.5: 78
+      token 0: offset=(1,2) text='B' prob=1.0863
+      token 1: offset=(1,6) text='Based' prob=0.6853
+      token 2: offset=(6,9) text=' on' prob=0.9673
+      token 3: offset=(9,13) text=' the' prob=1.1160
+      token 4: offset=(13,14) text=' ' prob=1.3430
+
+  SAMPLE 1: answer_len=386, gold_spans=[{'start': 249, 'end': 386}]
+    asi=400, cnt=107, gold_chars=137
+     TOKEN  GIDX    LOGIT    PROB PRED GOLD     A-OFFSET               A-TEXT NOTE
+    ------------------------------------------------------------------------------------------
+       0(400)   1.1890  1.1890    1    0 (    0,    2) No                   <<<PRED
+       1(401)   0.8361  0.8361    1    0 (    2,    3) ,                    <<<PRED
+       2(402)   0.9292  0.9292    1    0 (    3,    8)  Alan                <<<PRED
+       3(403)   0.8654  0.8654    1    0 (    8,   12)  Sep                 <<<PRED
+       4(404)   1.0251  1.0251    1    0 (   12,   14) in                   <<<PRED
+       5(405)   1.0650  1.0650    1    0 (   14,   18) wall                 <<<PRED
+       6(406)   0.9093  0.9093    1    0 (   18,   22)  did                 <<<PRED
+       7(407)   0.5786  0.5786    1    0 (   22,   26)  not                 <<<PRED
+       8(408)   0.6736  0.6736    1    0 (   26,   34)  observe             <<<PRED
+       9(409)   0.9046  0.9046    1    0 (   34,   39)  that                <<<PRED
+      10(410)   0.8658  0.8658    1    0 (   39,   44)  Tram                <<<PRED
+      11(411)   1.0751  1.0751    1    0 (   44,   47) ell                  <<<PRED
+      12(412)   0.9001  0.9001    1    0 (   47,   52)  Till                <<<PRED
+      13(413)   1.1216  1.1216    1    0 (   52,   55) man                  <<<PRED
+      14(414)   0.9002  0.9002    1    0 (   55,   56) '                    <<<PRED
+      15(415)   1.1116  1.1116    1    0 (   56,   57) s                    <<<PRED
+      16(416)   1.0071  1.0071    1    0 (   57,   61)  por                 <<<PRED
+      17(417)   0.9918  0.9918    1    0 (   61,   65) tray                 <<<PRED
+      18(418)   1.1869  1.1869    1    0 (   65,   67) al                   <<<PRED
+      19(419)   1.1202  1.1202    1    0 (   67,   70)  of                  <<<PRED
+      20(420)   0.8656  0.8656    1    0 (   70,   74)  Mil                 <<<PRED
+      21(421)   0.9175  0.9175    1    0 (   74,   79) chick                <<<PRED
+      22(422)   1.1622  1.1622    1    0 (   79,   84)  show                <<<PRED
+      23(423)   1.0801  1.0801    1    0 (   84,   86) ed                   <<<PRED
+      24(424)   1.0088  1.0088    1    0 (   86,   89)  af                  <<<PRED
+      25(425)   0.8193  0.8193    1    0 (   89,   96) fection              <<<PRED
+      26(426)   0.9957  0.9957    1    0 (   96,   99)  to                  <<<PRED
+      27(427)   1.0367  1.0367    1    0 (   99,  104) wards                <<<PRED
+      28(428)   1.0243  1.0243    1    0 (  104,  108)  the                 <<<PRED
+      29(429)   1.0470  1.0470    1    0 (  108,  118)  character           <<<PRED
+      30(430)   0.7790  0.7790    1    0 (  118,  119)                      <<<PRED
+      31(431)   0.8632  0.8632    1    0 (  119,  125) played               <<<PRED
+      32(432)   1.0418  1.0418    1    0 (  125,  128)  by                  <<<PRED
+      33(433)   0.7486  0.7486    1    0 (  128,  134)  Sarah               <<<PRED
+      34(434)   0.9087  0.9087    1    0 (  134,  138)  Boc                 <<<PRED
+      35(435)   0.9918  0.9918    1    0 (  138,  139) k                    <<<PRED
+      36(436)   0.6126  0.6126    1    0 (  139,  140) .                    <<<PRED
+      37(437)   0.4640  0.4640    0    0 (  140,  143)  In                  
+      38(438)   0.7321  0.7321    1    0 (  143,  147)  his                 <<<PRED
+      39(439)   0.8501  0.8501    1    0 (  147,  154)  review              <<<PRED
+      40(440)   0.1591  0.1591    0    0 (  154,  155) ,                    
+      41(441)   0.6127  0.6127    1    0 (  155,  159)  Sep                 <<<PRED
+      42(442)   0.7423  0.7423    1    0 (  159,  161) in                   <<<PRED
+      43(443)   0.7766  0.7766    1    0 (  161,  165) wall                 <<<PRED
+      44(444)   0.8999  0.8999    1    0 (  165,  173)  compare             <<<PRED
+      45(445)   0.6996  0.6996    1    0 (  173,  174) d                    <<<PRED
+      46(446)   0.8445  0.8445    1    0 (  174,  178)  Boc                 <<<PRED
+      47(447)   0.9465  0.9465    1    0 (  178,  179) k                    <<<PRED
+      48(448)   0.8752  0.8752    1    0 (  179,  180) '                    <<<PRED
+      49(449)   1.0335  1.0335    1    0 (  180,  181) s                    <<<PRED
+      50(450)   0.8357  0.8357    1    0 (  181,  186)  work                <<<PRED
+      51(451)   0.6558  0.6558    1    0 (  186,  192)  style               <<<PRED
+      52(452)   1.4315  1.4315    1    0 (  192,  195)  to                  <<<PRED
+      53(453)   0.9066  0.9066    1    0 (  195,  199)  Mil                 <<<PRED
+      54(454)   0.9030  0.9030    1    0 (  199,  204) chick                <<<PRED
+      55(455)   0.9163  0.9163    1    0 (  204,  205) '                    <<<PRED
+      56(456)   1.1034  1.1034    1    0 (  205,  206) s                    <<<PRED
+      57(457)   1.0127  1.0127    1    0 (  206,  210)  and                 <<<PRED
+      58(458)   0.9416  0.9416    1    0 (  210,  214)  not                 <<<PRED
+      59(459)   0.9191  0.9191    1    0 (  214,  216) ed                   <<<PRED
+      60(460)   0.7960  0.7960    1    0 (  216,  220)  the                 <<<PRED
+      61(461)   0.8011  0.8011    1    0 (  220,  224)  con                 <<<PRED
+      62(462)   0.3557  0.3557    0    0 (  224,  231) tention              
+      63(463)   0.3322  0.3322    0    0 (  231,  232)                      
+      64(464)   0.9079  0.9079    1    0 (  232,  239) between              <<<PRED
+      65(465)   0.8230  0.8230    1    0 (  239,  243)  the                 <<<PRED
+      66(466)   0.4311  0.4311    0    0 (  243,  247)  two                 
+      67(467)   0.6985  0.6985    1    0 (  247,  248) .                    <<<PRED
+      68(468)   0.4932  0.4932    0    1 (  248,  251)  He                  <<<GOLD
+      69(469)   0.7632  0.7632    1    1 (  251,  256)  also                <<<GOLD
+      70(470)   0.7396  0.7396    1    1 (  256,  259)  de                  <<<GOLD
+      71(471)   0.4249  0.4249    0    1 (  259,  266) scribed              <<<GOLD
+      72(472)   0.6708  0.6708    1    1 (  266,  270)  Boc                 <<<GOLD
+      73(473)   0.4927  0.4927    0    1 (  270,  271) k                    <<<GOLD
+      74(474)   0.9362  0.9362    1    1 (  271,  274)  as                  <<<GOLD
+      75(475)   0.2305  0.2305    0    1 (  274,  275)                      <<<GOLD
+      76(476)   0.9381  0.9381    1    1 (  275,  276) a                    <<<GOLD
+      77(477)   0.4669  0.4669    0    1 (  276,  278)  "                   <<<GOLD
+      78(478)   1.0296  1.0296    1    1 (  278,  281) new                  <<<GOLD
+      79(479)   1.0263  1.0263    1    1 (  281,  289)  manager             <<<GOLD
+    --- SUMMARY: gold=137, pred=343, overlap=111
+    --- Recall=81.02%, Precision=32.36%, F1=46.25%
+    --- Predicted positive tokens at t=0.5: 70
+      token 0: offset=(0,2) text='No' prob=1.1890
+      token 1: offset=(2,3) text=',' prob=0.8361
+      token 2: offset=(3,8) text=' Alan' prob=0.9292
+      token 3: offset=(8,12) text=' Sep' prob=0.8654
+      token 4: offset=(12,14) text='in' prob=1.0251
+
+  SAMPLE 2: answer_len=140, gold_spans=[{'start': 0, 'end': 140}]
+    asi=400, cnt=37, gold_chars=140
+     TOKEN  GIDX    LOGIT    PROB PRED GOLD     A-OFFSET               A-TEXT NOTE
+    ------------------------------------------------------------------------------------------
+       0(400)   1.3333  1.3333    1    1 (    0,    2) No                   <<<GOLD
+       1(401)   1.0409  1.0409    1    1 (    2,    3) ,                    <<<GOLD
+       2(402)   0.9658  0.9658    1    1 (    3,    8)  Alan                <<<GOLD
+       3(403)   0.8971  0.8971    1    1 (    8,   12)  Sep                 <<<GOLD
+       4(404)   1.1556  1.1556    1    1 (   12,   14) in                   <<<GOLD
+       5(405)   1.2536  1.2536    1    1 (   14,   18) wall                 <<<GOLD
+       6(406)   0.8015  0.8015    1    1 (   18,   22)  did                 <<<GOLD
+       7(407)   0.6557  0.6557    1    1 (   22,   26)  not                 <<<GOLD
+       8(408)   0.8335  0.8335    1    1 (   26,   34)  observe             <<<GOLD
+       9(409)   0.9474  0.9474    1    1 (   34,   39)  that                <<<GOLD
+      10(410)   0.8012  0.8012    1    1 (   39,   44)  Tram                <<<GOLD
+      11(411)   0.7825  0.7825    1    1 (   44,   47) ell                  <<<GOLD
+      12(412)   1.0789  1.0789    1    1 (   47,   52)  Till                <<<GOLD
+      13(413)   0.8220  0.8220    1    1 (   52,   55) man                  <<<GOLD
+      14(414)   0.9385  0.9385    1    1 (   55,   56) '                    <<<GOLD
+      15(415)   1.2399  1.2399    1    1 (   56,   57) s                    <<<GOLD
+      16(416)   0.9272  0.9272    1    1 (   57,   61)  por                 <<<GOLD
+      17(417)   0.9648  0.9648    1    1 (   61,   65) tray                 <<<GOLD
+      18(418)   1.2406  1.2406    1    1 (   65,   67) al                   <<<GOLD
+      19(419)   1.1792  1.1792    1    1 (   67,   70)  of                  <<<GOLD
+      20(420)   1.2632  1.2632    1    1 (   70,   74)  Mil                 <<<GOLD
+      21(421)   1.1436  1.1436    1    1 (   74,   79) chick                <<<GOLD
+      22(422)   1.3463  1.3463    1    1 (   79,   84)  show                <<<GOLD
+      23(423)   1.4048  1.4048    1    1 (   84,   86) ed                   <<<GOLD
+      24(424)   1.1838  1.1838    1    1 (   86,   89)  af                  <<<GOLD
+      25(425)   1.2109  1.2109    1    1 (   89,   96) fection              <<<GOLD
+      26(426)   1.0604  1.0604    1    1 (   96,   99)  to                  <<<GOLD
+      27(427)   1.1373  1.1373    1    1 (   99,  104) wards                <<<GOLD
+      28(428)   1.2652  1.2652    1    1 (  104,  108)  the                 <<<GOLD
+      29(429)   1.1698  1.1698    1    1 (  108,  118)  character           <<<GOLD
+      30(430)   0.6667  0.6667    1    1 (  118,  119)                      <<<GOLD
+      31(431)   0.8522  0.8522    1    1 (  119,  125) played               <<<GOLD
+      32(432)   1.2004  1.2004    1    1 (  125,  128)  by                  <<<GOLD
+      33(433)   0.9193  0.9193    1    1 (  128,  134)  Sarah               <<<GOLD
+      34(434)   1.1906  1.1906    1    1 (  134,  138)  Boc                 <<<GOLD
+      35(435)   1.3418  1.3418    1    1 (  138,  139) k                    <<<GOLD
+      36(436)   0.9525  0.9525    1    1 (  139,  140) .                    <<<GOLD
+    --- SUMMARY: gold=140, pred=140, overlap=140
+    --- Recall=100.00%, Precision=100.00%, F1=100.00%
+    --- Predicted positive tokens at t=0.5: 37
+      token 0: offset=(0,2) text='No' prob=1.3333
+      token 1: offset=(2,3) text=',' prob=1.0409
+      token 2: offset=(3,8) text=' Alan' prob=0.9658
+      token 3: offset=(8,12) text=' Sep' prob=0.8971
+      token 4: offset=(12,14) text='in' prob=1.1556
+
+  SAMPLE 3: answer_len=807, gold_spans=[{'start': 676, 'end': 806}]
+    asi=400, cnt=206, gold_chars=130
+     TOKEN  GIDX    LOGIT    PROB PRED GOLD     A-OFFSET               A-TEXT NOTE
+    ------------------------------------------------------------------------------------------
+       0(400)   0.4827  0.4827    0    0 (    1,    2) B                    
+       1(401)   0.8435  0.8435    1    0 (    1,    6) Based                <<<PRED
+       2(402)   1.2082  1.2082    1    0 (    6,    9)  on                  <<<PRED
+       3(403)   1.1838  1.1838    1    0 (    9,   13)  the                 <<<PRED
+       4(404)   0.8618  0.8618    1    0 (   13,   14)                      <<<PRED
+       5(405)   1.0407  1.0407    1    0 (   14,   22) provided             <<<PRED
+       6(406)   1.2936  1.2936    1    0 (   22,   30)  passage             <<<PRED
+       7(407)   1.1500  1.1500    1    0 (   30,   31) s                    <<<PRED
+       8(408)   1.0664  1.0664    1    0 (   31,   32) ,                    <<<PRED
+       9(409)   1.2211  1.2211    1    0 (   32,   35)  it                  <<<PRED
+      10(410)   0.5136  0.5136    1    0 (   35,   36)                      <<<PRED
+      11(411)   1.0132  1.0132    1    0 (   36,   42) appear               <<<PRED
+      12(412)   1.1571  1.1571    1    0 (   42,   43) s                    <<<PRED
+      13(413)   1.1486  1.1486    1    0 (   43,   48)  that                <<<PRED
+      14(414)   1.0354  1.0354    1    0 (   48,   52)  the                 <<<PRED
+      15(415)   1.1464  1.1464    1    0 (   52,   57)  song                <<<PRED
+      16(416)   0.9898  0.9898    1    0 (   57,   59)  "                   <<<PRED
+      17(417)   1.2642  1.2642    1    0 (   59,   61) Po                   <<<PRED
+      18(418)   1.4237  1.4237    1    0 (   61,   65) ison                 <<<PRED
+      19(419)   1.3119  1.3119    1    0 (   65,   70)  Cake                <<<PRED
+      20(420)   1.1981  1.1981    1    0 (   70,   71) "                    <<<PRED
+      21(421)   1.3440  1.3440    1    0 (   71,   74)  by                  <<<PRED
+      22(422)   0.8112  0.8112    1    0 (   74,   77)  No                  <<<PRED
+      23(423)   0.7052  0.7052    1    0 (   77,   80) emi                  <<<PRED
+      24(424)   1.1478  1.1478    1    0 (   80,   83)  is                  <<<PRED
+      25(425)   1.2952  1.2952    1    0 (   83,   89)  about               <<<PRED
+      26(426)   0.7070  0.7070    1    0 (   89,   90)                      <<<PRED
+      27(427)   0.8869  0.8869    1    0 (   90,   96) themes               <<<PRED
+      28(428)   1.0598  1.0598    1    0 (   96,   99)  of                  <<<PRED
+      29(429)   1.2890  1.2890    1    0 (   99,  105)  reven               <<<PRED
+      30(430)   1.2209  1.2209    1    0 (  105,  107) ge                   <<<PRED
+      31(431)   1.5680  1.5680    1    0 (  107,  108) ,                    <<<PRED
+      32(432)   0.8738  0.8738    1    0 (  108,  109)                      <<<PRED
+      33(433)   1.2363  1.2363    1    0 (  109,  117) standing             <<<PRED
+      34(434)   1.2431  1.2431    1    0 (  117,  120)  up                  <<<PRED
+      35(435)   1.3349  1.3349    1    0 (  120,  124)  for                 <<<PRED
+      36(436)   0.8226  0.8226    1    0 (  124,  128)  one                 <<<PRED
+      37(437)   0.9944  0.9944    1    0 (  128,  132) self                 <<<PRED
+      38(438)   0.9902  0.9902    1    0 (  132,  133) ,                    <<<PRED
+      39(439)   1.2467  1.2467    1    0 (  133,  137)  and                 <<<PRED
+      40(440)   1.3327  1.3327    1    0 (  137,  146)  personal            <<<PRED
+      41(441)   1.1485  1.1485    1    0 (  146,  151)  stru                <<<PRED
+      42(442)   1.2066  1.2066    1    0 (  151,  156) ggles                <<<PRED
+      43(443)   1.0366  1.0366    1    0 (  156,  157) .                    <<<PRED
+      44(444)   0.8559  0.8559    1    0 (  157,  161)  The                 <<<PRED
+      45(445)   0.8844  0.8844    1    0 (  161,  168)  lyrics              <<<PRED
+      46(446)   1.0650  1.0650    1    0 (  168,  171)  of                  <<<PRED
+      47(447)   0.8253  0.8253    1    0 (  171,  175)  the                 <<<PRED
+      48(448)   1.0085  1.0085    1    0 (  175,  180)  song                <<<PRED
+      49(449)   1.1678  1.1678    1    0 (  180,  184)  are                 <<<PRED
+      50(450)   1.0977  1.0977    1    0 (  184,  187)  de                  <<<PRED
+      51(451)   0.9013  0.9013    1    0 (  187,  194) scribed              <<<PRED
+      52(452)   1.0920  1.0920    1    0 (  194,  197)  as                  <<<PRED
+      53(453)   0.8930  0.8930    1    0 (  197,  198)                      <<<PRED
+      54(454)   0.8117  0.8117    1    0 (  198,  203) being                <<<PRED
+      55(455)   0.6974  0.6974    1    0 (  203,  208)  both                <<<PRED
+      56(456)   0.8613  0.8613    1    0 (  208,  214)  sweet               <<<PRED
+      57(457)   0.9307  0.9307    1    0 (  214,  218)  and                 <<<PRED
+      58(458)   0.5852  0.5852    1    0 (  218,  225)  demoni              <<<PRED
+      59(459)   1.0361  1.0361    1    0 (  225,  226) c                    <<<PRED
+      60(460)   0.8247  0.8247    1    0 (  226,  227) ,                    <<<PRED
+      61(461)   1.2286  1.2286    1    0 (  227,  231)  and                 <<<PRED
+      62(462)   1.0987  1.0987    1    0 (  231,  235)  the                 <<<PRED
+      63(463)   1.3289  1.3289    1    0 (  235,  242)  artist              <<<PRED
+      64(464)   0.9667  0.9667    1    0 (  242,  246)  has                 <<<PRED
+      65(465)   1.1259  1.1259    1    0 (  246,  252)  state               <<<PRED
+      66(466)   1.0107  1.0107    1    0 (  252,  253) d                    <<<PRED
+      67(467)   1.0377  1.0377    1    0 (  253,  258)  that                <<<PRED
+      68(468)   1.2118  1.2118    1    0 (  258,  262)  the                 <<<PRED
+      69(469)   1.4653  1.4653    1    0 (  262,  267)  song                <<<PRED
+      70(470)   1.2130  1.2130    1    0 (  267,  270)  is                  <<<PRED
+      71(471)   1.1944  1.1944    1    0 (  270,  280)  something           <<<PRED
+      72(472)   0.8845  0.8845    1    0 (  280,  284)  new                 <<<PRED
+      73(473)   1.4413  1.4413    1    0 (  284,  288)  and                 <<<PRED
+      74(474)   0.5419  0.5419    1    0 (  288,  291)  un                  <<<PRED
+      75(475)   1.1140  1.1140    1    0 (  291,  299) expected             <<<PRED
+      76(476)   1.2003  1.2003    1    0 (  299,  303)  for                 <<<PRED
+      77(477)   1.0566  1.0566    1    0 (  303,  308)  them                <<<PRED
+      78(478)   1.0949  1.0949    1    0 (  308,  309) .                    <<<PRED
+      79(479)   0.9877  0.9877    1    0 (  309,  313)  The                 <<<PRED
+    --- SUMMARY: gold=130, pred=800, overlap=126
+    --- Recall=96.92%, Precision=15.75%, F1=27.10%
+    --- Predicted positive tokens at t=0.5: 79
+      token 1: offset=(1,6) text='Based' prob=0.8435
+      token 2: offset=(6,9) text=' on' prob=1.2082
+      token 3: offset=(9,13) text=' the' prob=1.1838
+      token 4: offset=(13,14) text=' ' prob=0.8618
+      token 5: offset=(14,22) text='provided' prob=1.0407
+
+  SAMPLE 4: answer_len=427, gold_spans=[{'start': 0, 'end': 427}]
+    asi=400, cnt=106, gold_chars=427
+     TOKEN  GIDX    LOGIT    PROB PRED GOLD     A-OFFSET               A-TEXT NOTE
+    ------------------------------------------------------------------------------------------
+       0(400)   1.1158  1.1158    1    1 (    0,    2) No                   <<<GOLD
+       1(401)   1.3365  1.3365    1    1 (    2,    3) ,                    <<<GOLD
+       2(402)   1.2859  1.2859    1    1 (    3,    7)  the                 <<<GOLD
+       3(403)   1.3358  1.3358    1    1 (    7,   15)  message             <<<GOLD
+       4(404)   1.4884  1.4884    1    1 (   15,   18)  of                  <<<GOLD
+       5(405)   1.1098  1.1098    1    1 (   18,   23)  Mary                <<<GOLD
+       6(406)   1.3182  1.3182    1    1 (   23,   25)  J                   <<<GOLD
+       7(407)   1.5965  1.5965    1    1 (   25,   26) .                    <<<GOLD
+       8(408)   1.2879  1.2879    1    1 (   26,   28)  B                   <<<GOLD
+       9(409)   1.4021  1.4021    1    1 (   28,   32) lige                 <<<GOLD
+      10(410)   1.3593  1.3593    1    1 (   32,   33) '                    <<<GOLD
+      11(411)   1.5432  1.5432    1    1 (   33,   34) s                    <<<GOLD
+      12(412)   1.1701  1.1701    1    1 (   34,   39)  song                <<<GOLD
+      13(413)   1.0977  1.0977    1    1 (   39,   41)  "                   <<<GOLD
+      14(414)   1.2734  1.2734    1    1 (   41,   44) You                  <<<GOLD
+      15(415)   1.2439  1.2439    1    1 (   44,   48)  Ain                 <<<GOLD
+      16(416)   1.3019  1.3019    1    1 (   48,   49) '                    <<<GOLD
+      17(417)   1.2639  1.2639    1    1 (   49,   50) t                    <<<GOLD
+      18(418)   1.3885  1.3885    1    1 (   50,   54)  the                 <<<GOLD
+      19(419)   1.0657  1.0657    1    1 (   54,   59)  Only                <<<GOLD
+      20(420)   1.0766  1.0766    1    1 (   59,   63)  One                 <<<GOLD
+      21(421)   1.3674  1.3674    1    1 (   63,   64) "                    <<<GOLD
+      22(422)   1.1961  1.1961    1    1 (   64,   67)  is                  <<<GOLD
+      23(423)   0.4688  0.4688    0    1 (   67,   71)  not                 <<<GOLD
+      24(424)   1.5098  1.5098    1    1 (   71,   76)  that                <<<GOLD
+      25(425)   0.9794  0.9794    1    1 (   76,   77)                      <<<GOLD
+      26(426)   1.2188  1.2188    1    1 (   77,   82) these                <<<GOLD
+      27(427)   1.0786  1.0786    1    1 (   82,   92)  difficult           <<<GOLD
+      28(428)   1.2751  1.2751    1    1 (   92,   95) ies                  <<<GOLD
+      29(429)   1.6107  1.6107    1    1 (   95,   99)  are                 <<<GOLD
+      30(430)   0.8767  0.8767    1    1 (   99,  100)                      <<<GOLD
+      31(431)   1.1369  1.1369    1    1 (  100,  109) exclusive            <<<GOLD
+      32(432)   1.3620  1.3620    1    1 (  109,  111) ly                   <<<GOLD
+      33(433)   1.3706  1.3706    1    1 (  111,  122)  experience          <<<GOLD
+      34(434)   1.6982  1.6982    1    1 (  122,  123) d                    <<<GOLD
+      35(435)   1.7221  1.7221    1    1 (  123,  126)  by                  <<<GOLD
+      36(436)   1.4469  1.4469    1    1 (  126,  130)  the                 <<<GOLD
+      37(437)   1.0752  1.0752    1    1 (  130,  141)  individual          <<<GOLD
+      38(438)   1.1959  1.1959    1    1 (  141,  148)  listen              <<<GOLD
+      39(439)   1.4877  1.4877    1    1 (  148,  150) er                   <<<GOLD
+      40(440)   0.9590  0.9590    1    1 (  150,  151) .                    <<<GOLD
+      41(441)   1.0763  1.0763    1    1 (  151,  155)  The                 <<<GOLD
+      42(442)   1.3240  1.3240    1    1 (  155,  160)  song                <<<GOLD
+      43(443)   0.9387  0.9387    1    1 (  160,  161)                      <<<GOLD
+      44(444)   0.8329  0.8329    1    1 (  161,  162) a                    <<<GOLD
+      45(445)   1.0943  1.0943    1    1 (  162,  171) cknowledg            <<<GOLD
+      46(446)   0.9911  0.9911    1    1 (  171,  173) es                   <<<GOLD
+      47(447)   1.1807  1.1807    1    1 (  173,  178)  that                <<<GOLD
+      48(448)   1.1493  1.1493    1    1 (  178,  187)  everyone            <<<GOLD
+      49(449)   0.8206  0.8206    1    1 (  187,  188)                      <<<GOLD
+      50(450)   1.1125  1.1125    1    1 (  188,  192) goes                 <<<GOLD
+      51(451)   1.0962  1.0962    1    1 (  192,  200)  through             <<<GOLD
+      52(452)   1.1973  1.1973    1    1 (  200,  205)  stru                <<<GOLD
+      53(453)   1.1341  1.1341    1    1 (  205,  210) ggles                <<<GOLD
+      54(454)   1.5385  1.5385    1    1 (  210,  214)  and                 <<<GOLD
+      55(455)   1.4950  1.4950    1    1 (  214,  219)  that                <<<GOLD
+      56(456)   1.3240  1.3240    1    1 (  219,  223)  the                 <<<GOLD
+      57(457)   1.2913  1.2913    1    1 (  223,  230)  listen              <<<GOLD
+      58(458)   1.5327  1.5327    1    1 (  230,  232) er                   <<<GOLD
+      59(459)   1.1220  1.1220    1    1 (  232,  235)  is                  <<<GOLD
+      60(460)   0.8119  0.8119    1    1 (  235,  239)  not                 <<<GOLD
+      61(461)   0.9839  0.9839    1    1 (  239,  240)                      <<<GOLD
+      62(462)   1.1968  1.1968    1    1 (  240,  245) alone                <<<GOLD
+      63(463)   1.5307  1.5307    1    1 (  245,  248)  in                  <<<GOLD
+      64(464)   0.8408  0.8408    1    1 (  248,  249)                      <<<GOLD
+      65(465)   1.2451  1.2451    1    1 (  249,  254) their                <<<GOLD
+      66(466)   1.1083  1.1083    1    1 (  254,  265)  experience          <<<GOLD
+      67(467)   1.1436  1.1436    1    1 (  265,  266) s                    <<<GOLD
+      68(468)   0.7506  0.7506    1    1 (  266,  267) .                    <<<GOLD
+      69(469)   0.8758  0.8758    1    1 (  267,  271)  The                 <<<GOLD
+      70(470)   1.1098  1.1098    1    1 (  271,  276)  song                <<<GOLD
+      71(471)   1.0355  1.0355    1    1 (  276,  277) '                    <<<GOLD
+      72(472)   1.0478  1.0478    1    1 (  277,  278) s                    <<<GOLD
+      73(473)   1.1828  1.1828    1    1 (  278,  286)  message             <<<GOLD
+      74(474)   0.9145  0.9145    1    1 (  286,  289)  is                  <<<GOLD
+      75(475)   0.9258  0.9258    1    1 (  289,  293)  one                 <<<GOLD
+      76(476)   1.0475  1.0475    1    1 (  293,  296)  of                  <<<GOLD
+      77(477)   1.3054  1.3054    1    1 (  296,  304)  comfort             <<<GOLD
+      78(478)   1.3046  1.3046    1    1 (  304,  308)  and                 <<<GOLD
+      79(479)   0.9401  0.9401    1    1 (  308,  318)  solidarit           <<<GOLD
+    --- SUMMARY: gold=427, pred=423, overlap=423
+    --- Recall=99.06%, Precision=100.00%, F1=99.53%
+    --- Predicted positive tokens at t=0.5: 79
+      token 0: offset=(0,2) text='No' prob=1.1158
+      token 1: offset=(2,3) text=',' prob=1.3365
+      token 2: offset=(3,7) text=' the' prob=1.2859
+      token 3: offset=(7,15) text=' message' prob=1.3358
+      token 4: offset=(15,18) text=' of' prob=1.4884
+
+======================================================================
+CHECK 6: Contrast with original full_run_day1 predictions
+======================================================================
+  test_predictions.csv rows: 2994
+  Gold labels: {0: 2068, 1: 926}
+  Pred labels: {0: 2256, 1: 738}
+  Prob range: [0.0006, 0.9997]
+  Pred positive rate: 24.65%
+  Gold positive rate: 30.93%
+
+Saved to /tmp/diagnostic_output.txt

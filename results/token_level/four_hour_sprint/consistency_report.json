@@ -1,0 +1,12 @@
+{
+  "prob_cache_sha256": "a368f37d70d30891ed5c50950f1d9d4defb700a3985ee0a67986ca46713f9121",
+  "prob_match_fresh_vs_cache": "1256/1256",
+  "token_metrics_agree": true,
+  "char_method_A_vs_B_diff_t020": -0.005471,
+  "char_method_A_vs_B_diff_t005": 0.06481,
+  "method_C_matches_compute_all_metrics": true,
+  "method_B_overestimates_char_f1": true,
+  "explanation": "two_stage_gate.py uses min(gc,pc) per-sample overlap approximation which overestimates actual character-level IoU. The canonical method uses spans_to_char_set to compute true character-level intersection/union. This explains why raw sweep in two_stage_gate showed Char F1=0.4310 vs full_analysis.py's 0.3896 at t=0.20.",
+  "official_char_f1_at_t020": 0.3896,
+  "official_char_f1_at_t005": 0.3662
+}

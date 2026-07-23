@@ -1,0 +1,18 @@
+{
+  "threshold": 0.9,
+  "auroc": 0.9812,
+  "pr_auc": 0.9415,
+  "token_accuracy": 0.9494,
+  "pos_precision": 0.8744,
+  "pos_recall": 0.8649,
+  "pos_f1": 0.8696,
+  "macro_f1": 0.9191,
+  "char_precision": 0.0,
+  "char_recall": 0.0,
+  "char_f1": 0.0,
+  "answer_accuracy": 0.9118,
+  "unfaithful_precision": 0.9442,
+  "unfaithful_recall": 0.7818,
+  "unfaithful_f1": 0.8554,
+  "pred_pos_rate": 0.193
+}

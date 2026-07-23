@@ -1,0 +1,19 @@
+{
+  "run_name": "fast_v1",
+  "init_checkpoint": "results/token_level/four_hour_sprint/best_checkpoint.pt",
+  "encoder_lr": 5e-06,
+  "answer_head_lr": 5e-05,
+  "weight_decay": 0.01,
+  "warmup_ratio": 0.1,
+  "grad_clip": 1.0,
+  "num_epochs": 2,
+  "answer_loss_weight": 1.0,
+  "token_loss_weight": 0.25,
+  "kl_loss_weight": 0.05,
+  "positive_weight": 1.0,
+  "batch_size": 8,
+  "max_length": 768,
+  "context_max_length": 400,
+  "best_answer_f1": 0.5957,
+  "best_checkpoint": "results/token_level/answer_classifier/fast_v1_best.pt"
+}

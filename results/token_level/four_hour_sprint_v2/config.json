@@ -1,0 +1,17 @@
+{
+  "batch_size": 4,
+  "grad_accum": 4,
+  "epochs": 3,
+  "class_weight_pos": 4.0,
+  "class_weight_neg": 1.0,
+  "focal_gamma": 2.0,
+  "encoder_lr": 1e-05,
+  "classifier_lr": 0.0003,
+  "weight_decay": 0.01,
+  "grad_clip": 1.0,
+  "warmup_steps": 200,
+  "amp_init_scale": 65536,
+  "max_length": 768,
+  "context_max_length": 400,
+  "skipped_steps_total": 0
+}

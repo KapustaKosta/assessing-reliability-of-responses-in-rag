@@ -1,0 +1,34 @@
+[
+  {
+    "epoch": 1,
+    "train_loss": 0.5721989162533833,
+    "best_threshold": 0.2,
+    "char_f1": 0.0,
+    "char_prec": 0.0,
+    "char_rec": 0.0,
+    "token_f1": 0.38641996858090416,
+    "token_prec": 0.2627655786350148,
+    "token_rec": 0.7299043850972634,
+    "token_auroc": 0.6994704288258231,
+    "token_pr_auc": 0.29962356622354314,
+    "gold_pos_rate": 0.1748993737529842,
+    "pred_pos_rate": 0.48583159375828944,
+    "epoch_time_sec": 929.493824005127
+  },
+  {
+    "epoch": 2,
+    "train_loss": 0.5283697806179809,
+    "best_threshold": 0.12,
+    "char_f1": 0.0,
+    "char_prec": 0.0,
+    "char_rec": 0.0,
+    "token_f1": 0.3995626224429359,
+    "token_prec": 0.30522395851459994,
+    "token_rec": 0.5783053082756346,
+    "token_auroc": 0.7175991866162824,
+    "token_pr_auc": 0.3410261840305644,
+    "gold_pos_rate": 0.1748993737529842,
+    "pred_pos_rate": 0.3313803960464553,
+    "epoch_time_sec": 928.267186164856
+  }
+]

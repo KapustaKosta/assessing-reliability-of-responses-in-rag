@@ -1,0 +1,5 @@
+tok_p,tok_r,tok_f,cp,cr,cf,ap,ar,af,TP,FP,FN,TN,gpr,ppr,A,B,C,D,gt,tt,holdout_sm,model,label,model_dim,n_train,n_val
+0.3698,0.8339,0.5124,0.3718,0.8298,0.5135,0.6744,0.8056,0.7342,8196,13968,1632,11445,0.2789,0.6289,145,35,70,64,0.1,0.15,Llama-2-7b-chat-hf,LOSO_emb_prob,LOSO_holdout_Llama-2-7b-chat-hf,2332,3759,314
+0.0524,0.224,0.0849,0.0578,0.2625,0.0947,0.2083,0.2778,0.2381,71,1284,246,13020,0.0217,0.0927,5,13,19,277,0.75,0.05,Llama-3.1-8B-Instruct,LOSO_emb_prob,LOSO_holdout_Llama-3.1-8B-Instruct,2332,3759,314
+0.304,0.6459,0.4135,0.3087,0.6441,0.4174,0.6207,0.5902,0.605,2377,5441,1303,7682,0.219,0.4653,72,50,44,148,0.35,0.05,Mistral-7B-Instruct-v0.1,LOSO_emb_prob,LOSO_holdout_Mistral-7B-Instruct-v0.1,2332,3759,314
+0.1372,0.5015,0.2155,0.1439,0.5114,0.2246,0.35,0.614,0.4459,672,4225,668,14477,0.0669,0.2443,35,22,65,192,0.2,0.2,Mistral-7B-Instruct-v0.3,LOSO_emb_prob,LOSO_holdout_Mistral-7B-Instruct-v0.3,2332,3759,314

@@ -1,0 +1,48 @@
+{
+  "run_id": "overnight_autorun_20260721",
+  "start_time": "2026-07-21T23:44:00+08:00",
+  "end_time": "2026-07-22T00:13:00+08:00",
+  "duration_minutes": 29,
+  "environment": {
+    "hostname": "notebook-cedc4280-d123-4507-b11b-70db7fd27004",
+    "python_version": "3.11.10",
+    "gpu": "Ascend 910B4",
+    "device": "npu",
+    "git_branch": "chengyi/claim-mil-correctness-fixes",
+    "git_commit": "ebcaab96"
+  },
+  "data_audit": {
+    "has_character_spans": false,
+    "route": "B",
+    "reason": "Only answer-level markers exist, no character-level spans for token supervision"
+  },
+  "tiny_overfit": {
+    "token_level": {
+      "status": "PASSED",
+      "token_f1": 1.0,
+      "span_f1": 0.984,
+      "data": "synthetic"
+    }
+  },
+  "experiments": [
+    "exp_001: claim_mil_faithfulness_v1 (Macro F1=0.5175)",
+    "exp_002: claim_mil_relevancy_v1 (Macro F1=0.5997)",
+    "exp_003: claim_mil_reliability_v1 (Macro F1=0.5816)"
+  ],
+  "best_model": {
+    "label": "relevancy",
+    "dev_macro_f1": 0.5997,
+    "checkpoint": "results/overnight_autorun/experiments/claim_mil_relevancy_v1/best_model.pt"
+  },
+  "test_evaluation": {
+    "status": "NOT_RUN",
+    "reason": "Model selection criteria not fully satisfied (no checkpoint reload verification)"
+  },
+  "files": {
+    "report": "results/overnight_autorun/OVERNIGHT_REPORT.md",
+    "experiment_table": "results/overnight_autorun/experiment_table.csv",
+    "data_audit": "results/overnight_autorun/diagnostics/data_supervision_audit.json",
+    "git_status_before": "results/overnight_autorun/diagnostics/git_status_before.txt",
+    "git_status_after": "results/overnight_autorun/diagnostics/git_status_after.txt"
+  }
+}

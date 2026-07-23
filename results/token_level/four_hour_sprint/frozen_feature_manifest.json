@@ -1,0 +1,99 @@
+{
+  "total_dim": 2348,
+  "emb_dim": 768,
+  "groups": {
+    "group_A_embeddings_CLS": {
+      "start": 0,
+      "end": 768,
+      "dim": 768,
+      "feature_names": null
+    },
+    "group_B_embeddings_mean": {
+      "start": 768,
+      "end": 1536,
+      "dim": 768,
+      "feature_names": null
+    },
+    "group_C_embeddings_max": {
+      "start": 1536,
+      "end": 2304,
+      "dim": 768,
+      "feature_names": null
+    },
+    "group_D_prob_features": {
+      "start": 2304,
+      "end": 2332,
+      "dim": 28,
+      "feature_names": null
+    },
+    "group_E_sm_onehot": {
+      "start": 2332,
+      "end": 2336,
+      "dim": 4,
+      "feature_names": null
+    },
+    "group_F_sm_interactions": {
+      "start": 2336,
+      "end": 2348,
+      "dim": 12,
+      "feature_names": null
+    }
+  },
+  "sub_dims": {
+    "A_prob_only": 28,
+    "B_emb_only": 2304,
+    "C_emb_prob_no_sm": 2332,
+    "D_sm_only": 4,
+    "E_full": 2348
+  },
+  "prob_feature_names": [
+    "prob_max",
+    "prob_mean",
+    "prob_std",
+    "prob_p90",
+    "prob_p95",
+    "prob_p99",
+    "top1",
+    "top3",
+    "top5",
+    "prob_sum",
+    "prob_sum_norm",
+    "cnt_005",
+    "cnt_010",
+    "cnt_015",
+    "cnt_020",
+    "cnt_030",
+    "rat_005",
+    "rat_010",
+    "rat_015",
+    "rat_020",
+    "rat_030",
+    "n_spans",
+    "max_consec",
+    "ctx_len",
+    "q_len",
+    "trunc",
+    "n_tokens",
+    "n_chars"
+  ],
+  "sm_feature_names": [
+    "sm_Llama-2-7b-chat-hf",
+    "sm_Llama-3.1-8B-Instruct",
+    "sm_Mistral-7B-Instruct-v0.1",
+    "sm_Mistral-7B-Instruct-v0.3"
+  ],
+  "int_feature_names": [
+    "sm_Llama-2-7b-chat-hf_max",
+    "sm_Llama-3.1-8B-Instruct_max",
+    "sm_Mistral-7B-Instruct-v0.1_max",
+    "sm_Mistral-7B-Instruct-v0.3_max",
+    "sm_Llama-2-7b-chat-hf_p95",
+    "sm_Llama-3.1-8B-Instruct_p95",
+    "sm_Mistral-7B-Instruct-v0.1_p95",
+    "sm_Mistral-7B-Instruct-v0.3_p95",
+    "sm_Llama-2-7b-chat-hf_r005",
+    "sm_Llama-3.1-8B-Instruct_r005",
+    "sm_Mistral-7B-Instruct-v0.1_r005",
+    "sm_Mistral-7B-Instruct-v0.3_r005"
+  ]
+}

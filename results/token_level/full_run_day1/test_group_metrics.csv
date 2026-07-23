@@ -1,0 +1,5 @@
+source_model,n_samples,accuracy,unfaithful_f1,token_f1,auroc
+Llama-2-7b-chat-hf,785,0.6764,0.6872,0.4604,0.7272
+Llama-3.1-8B-Instruct,735,0.8952,0.2524,0.0916,0.62
+Mistral-7B-Instruct-v0.1,730,0.6575,0.4748,0.2683,0.6773
+Mistral-7B-Instruct-v0.3,744,0.8212,0.5128,0.2655,0.8238

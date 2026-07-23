@@ -1,0 +1,347 @@
+[
+  {
+    "sample_id": "overfit_0",
+    "question_id": "q0",
+    "context": "The Eiffel Tower is in Paris. The population of France is about 67 million. Paris has many famous landmarks including the Louvre Museum and Notre-Dame Cathedral.",
+    "question": "What can you tell me about Paris?",
+    "answer": "London is the capital of England and Paris is in France",
+    "hallucination_spans": [
+      {
+        "start": 0,
+        "end": 31
+      }
+    ],
+    "source_model": "test_model"
+  },
+  {
+    "sample_id": "overfit_1",
+    "question_id": "q0",
+    "context": "The Eiffel Tower is in Paris. The population of France is about 67 million. Paris has many famous landmarks including the Louvre Museum and Notre-Dame Cathedral.",
+    "question": "What can you tell me about Paris?",
+    "answer": "London is the capital of England and Paris is in France",
+    "hallucination_spans": [
+      {
+        "start": 0,
+        "end": 31
+      }
+    ],
+    "source_model": "test_model"
+  },
+  {
+    "sample_id": "overfit_2",
+    "question_id": "q0",
+    "context": "The Eiffel Tower is in Paris. The population of France is about 67 million. Paris has many famous landmarks including the Louvre Museum and Notre-Dame Cathedral.",
+    "question": "What can you tell me about Paris?",
+    "answer": "London is the capital of England and Paris is in France",
+    "hallucination_spans": [
+      {
+        "start": 0,
+        "end": 31
+      }
+    ],
+    "source_model": "test_model"
+  },
+  {
+    "sample_id": "overfit_3",
+    "question_id": "q0",
+    "context": "The Eiffel Tower is in Paris. The population of France is about 67 million. Paris has many famous landmarks including the Louvre Museum and Notre-Dame Cathedral.",
+    "question": "What can you tell me about Paris?",
+    "answer": "London is the capital of England and Paris is in France",
+    "hallucination_spans": [
+      {
+        "start": 0,
+        "end": 31
+      }
+    ],
+    "source_model": "test_model"
+  },
+  {
+    "sample_id": "overfit_4",
+    "question_id": "q0",
+    "context": "The Eiffel Tower is in Paris. The population of France is about 67 million. Paris has many famous landmarks including the Louvre Museum and Notre-Dame Cathedral.",
+    "question": "What can you tell me about Paris?",
+    "answer": "London is the capital of England and Paris is in France",
+    "hallucination_spans": [
+      {
+        "start": 0,
+        "end": 31
+      }
+    ],
+    "source_model": "test_model"
+  },
+  {
+    "sample_id": "overfit_5",
+    "question_id": "q0",
+    "context": "The Eiffel Tower is in Paris. The population of France is about 67 million. Paris has many famous landmarks including the Louvre Museum and Notre-Dame Cathedral.",
+    "question": "What can you tell me about Paris?",
+    "answer": "London is the capital of England and Paris is in France",
+    "hallucination_spans": [
+      {
+        "start": 0,
+        "end": 31
+      }
+    ],
+    "source_model": "test_model"
+  },
+  {
+    "sample_id": "overfit_6",
+    "question_id": "q0",
+    "context": "The Eiffel Tower is in Paris. The population of France is about 67 million. Paris has many famous landmarks including the Louvre Museum and Notre-Dame Cathedral.",
+    "question": "What can you tell me about Paris?",
+    "answer": "London is the capital of England and Paris is in France",
+    "hallucination_spans": [
+      {
+        "start": 0,
+        "end": 31
+      }
+    ],
+    "source_model": "test_model"
+  },
+  {
+    "sample_id": "overfit_7",
+    "question_id": "q0",
+    "context": "The Eiffel Tower is in Paris. The population of France is about 67 million. Paris has many famous landmarks including the Louvre Museum and Notre-Dame Cathedral.",
+    "question": "What can you tell me about Paris?",
+    "answer": "London is the capital of England and Paris is in France",
+    "hallucination_spans": [
+      {
+        "start": 0,
+        "end": 31
+      }
+    ],
+    "source_model": "test_model"
+  },
+  {
+    "sample_id": "overfit_8",
+    "question_id": "q0",
+    "context": "The Eiffel Tower is in Paris. The population of France is about 67 million. Paris has many famous landmarks including the Louvre Museum and Notre-Dame Cathedral.",
+    "question": "What can you tell me about Paris?",
+    "answer": "London is the capital of England and Paris is in France",
+    "hallucination_spans": [
+      {
+        "start": 0,
+        "end": 31
+      }
+    ],
+    "source_model": "test_model"
+  },
+  {
+    "sample_id": "overfit_9",
+    "question_id": "q0",
+    "context": "The Eiffel Tower is in Paris. The population of France is about 67 million. Paris has many famous landmarks including the Louvre Museum and Notre-Dame Cathedral.",
+    "question": "What can you tell me about Paris?",
+    "answer": "London is the capital of England and Paris is in France",
+    "hallucination_spans": [
+      {
+        "start": 0,
+        "end": 31
+      }
+    ],
+    "source_model": "test_model"
+  },
+  {
+    "sample_id": "overfit_10",
+    "question_id": "q0",
+    "context": "The Eiffel Tower is in Paris. The population of France is about 67 million. Paris has many famous landmarks including the Louvre Museum and Notre-Dame Cathedral.",
+    "question": "What can you tell me about Paris?",
+    "answer": "London is the capital of England and Paris is in France",
+    "hallucination_spans": [
+      {
+        "start": 0,
+        "end": 31
+      }
+    ],
+    "source_model": "test_model"
+  },
+  {
+    "sample_id": "overfit_11",
+    "question_id": "q0",
+    "context": "The Eiffel Tower is in Paris. The population of France is about 67 million. Paris has many famous landmarks including the Louvre Museum and Notre-Dame Cathedral.",
+    "question": "What can you tell me about Paris?",
+    "answer": "London is the capital of England and Paris is in France",
+    "hallucination_spans": [
+      {
+        "start": 0,
+        "end": 31
+      }
+    ],
+    "source_model": "test_model"
+  },
+  {
+    "sample_id": "overfit_12",
+    "question_id": "q0",
+    "context": "The Eiffel Tower is in Paris. The population of France is about 67 million. Paris has many famous landmarks including the Louvre Museum and Notre-Dame Cathedral.",
+    "question": "What can you tell me about Paris?",
+    "answer": "London is the capital of England and Paris is in France",
+    "hallucination_spans": [
+      {
+        "start": 0,
+        "end": 31
+      }
+    ],
+    "source_model": "test_model"
+  },
+  {
+    "sample_id": "overfit_13",
+    "question_id": "q0",
+    "context": "The Eiffel Tower is in Paris. The population of France is about 67 million. Paris has many famous landmarks including the Louvre Museum and Notre-Dame Cathedral.",
+    "question": "What can you tell me about Paris?",
+    "answer": "London is the capital of England and Paris is in France",
+    "hallucination_spans": [
+      {
+        "start": 0,
+        "end": 31
+      }
+    ],
+    "source_model": "test_model"
+  },
+  {
+    "sample_id": "overfit_14",
+    "question_id": "q0",
+    "context": "The Eiffel Tower is in Paris. The population of France is about 67 million. Paris has many famous landmarks including the Louvre Museum and Notre-Dame Cathedral.",
+    "question": "What can you tell me about Paris?",
+    "answer": "London is the capital of England and Paris is in France",
+    "hallucination_spans": [
+      {
+        "start": 0,
+        "end": 31
+      }
+    ],
+    "source_model": "test_model"
+  },
+  {
+    "sample_id": "overfit_15",
+    "question_id": "q0",
+    "context": "The Eiffel Tower is in Paris. The population of France is about 67 million. Paris has many famous landmarks including the Louvre Museum and Notre-Dame Cathedral.",
+    "question": "What can you tell me about Paris?",
+    "answer": "Paris is the capital of France and has famous landmarks",
+    "hallucination_spans": [],
+    "source_model": "test_model"
+  },
+  {
+    "sample_id": "overfit_16",
+    "question_id": "q0",
+    "context": "The Eiffel Tower is in Paris. The population of France is about 67 million. Paris has many famous landmarks including the Louvre Museum and Notre-Dame Cathedral.",
+    "question": "What can you tell me about Paris?",
+    "answer": "Paris is the capital of France and has famous landmarks",
+    "hallucination_spans": [],
+    "source_model": "test_model"
+  },
+  {
+    "sample_id": "overfit_17",
+    "question_id": "q0",
+    "context": "The Eiffel Tower is in Paris. The population of France is about 67 million. Paris has many famous landmarks including the Louvre Museum and Notre-Dame Cathedral.",
+    "question": "What can you tell me about Paris?",
+    "answer": "Paris is the capital of France and has famous landmarks",
+    "hallucination_spans": [],
+    "source_model": "test_model"
+  },
+  {
+    "sample_id": "overfit_18",
+    "question_id": "q0",
+    "context": "The Eiffel Tower is in Paris. The population of France is about 67 million. Paris has many famous landmarks including the Louvre Museum and Notre-Dame Cathedral.",
+    "question": "What can you tell me about Paris?",
+    "answer": "Paris is the capital of France and has famous landmarks",
+    "hallucination_spans": [],
+    "source_model": "test_model"
+  },
+  {
+    "sample_id": "overfit_19",
+    "question_id": "q0",
+    "context": "The Eiffel Tower is in Paris. The population of France is about 67 million. Paris has many famous landmarks including the Louvre Museum and Notre-Dame Cathedral.",
+    "question": "What can you tell me about Paris?",
+    "answer": "Paris is the capital of France and has famous landmarks",
+    "hallucination_spans": [],
+    "source_model": "test_model"
+  },
+  {
+    "sample_id": "overfit_20",
+    "question_id": "q0",
+    "context": "The Eiffel Tower is in Paris. The population of France is about 67 million. Paris has many famous landmarks including the Louvre Museum and Notre-Dame Cathedral.",
+    "question": "What can you tell me about Paris?",
+    "answer": "Paris is the capital of France and has famous landmarks",
+    "hallucination_spans": [],
+    "source_model": "test_model"
+  },
+  {
+    "sample_id": "overfit_21",
+    "question_id": "q0",
+    "context": "The Eiffel Tower is in Paris. The population of France is about 67 million. Paris has many famous landmarks including the Louvre Museum and Notre-Dame Cathedral.",
+    "question": "What can you tell me about Paris?",
+    "answer": "Paris is the capital of France and has famous landmarks",
+    "hallucination_spans": [],
+    "source_model": "test_model"
+  },
+  {
+    "sample_id": "overfit_22",
+    "question_id": "q0",
+    "context": "The Eiffel Tower is in Paris. The population of France is about 67 million. Paris has many famous landmarks including the Louvre Museum and Notre-Dame Cathedral.",
+    "question": "What can you tell me about Paris?",
+    "answer": "Paris is the capital of France and has famous landmarks",
+    "hallucination_spans": [],
+    "source_model": "test_model"
+  },
+  {
+    "sample_id": "overfit_23",
+    "question_id": "q0",
+    "context": "The Eiffel Tower is in Paris. The population of France is about 67 million. Paris has many famous landmarks including the Louvre Museum and Notre-Dame Cathedral.",
+    "question": "What can you tell me about Paris?",
+    "answer": "Paris is the capital of France and has famous landmarks",
+    "hallucination_spans": [],
+    "source_model": "test_model"
+  },
+  {
+    "sample_id": "overfit_24",
+    "question_id": "q0",
+    "context": "The Eiffel Tower is in Paris. The population of France is about 67 million. Paris has many famous landmarks including the Louvre Museum and Notre-Dame Cathedral.",
+    "question": "What can you tell me about Paris?",
+    "answer": "Paris is the capital of France and has famous landmarks",
+    "hallucination_spans": [],
+    "source_model": "test_model"
+  },
+  {
+    "sample_id": "overfit_25",
+    "question_id": "q0",
+    "context": "The Eiffel Tower is in Paris. The population of France is about 67 million. Paris has many famous landmarks including the Louvre Museum and Notre-Dame Cathedral.",
+    "question": "What can you tell me about Paris?",
+    "answer": "Paris is the capital of France and has famous landmarks",
+    "hallucination_spans": [],
+    "source_model": "test_model"
+  },
+  {
+    "sample_id": "overfit_26",
+    "question_id": "q0",
+    "context": "The Eiffel Tower is in Paris. The population of France is about 67 million. Paris has many famous landmarks including the Louvre Museum and Notre-Dame Cathedral.",
+    "question": "What can you tell me about Paris?",
+    "answer": "Paris is the capital of France and has famous landmarks",
+    "hallucination_spans": [],
+    "source_model": "test_model"
+  },
+  {
+    "sample_id": "overfit_27",
+    "question_id": "q0",
+    "context": "The Eiffel Tower is in Paris. The population of France is about 67 million. Paris has many famous landmarks including the Louvre Museum and Notre-Dame Cathedral.",
+    "question": "What can you tell me about Paris?",
+    "answer": "Paris is the capital of France and has famous landmarks",
+    "hallucination_spans": [],
+    "source_model": "test_model"
+  },
+  {
+    "sample_id": "overfit_28",
+    "question_id": "q0",
+    "context": "The Eiffel Tower is in Paris. The population of France is about 67 million. Paris has many famous landmarks including the Louvre Museum and Notre-Dame Cathedral.",
+    "question": "What can you tell me about Paris?",
+    "answer": "Paris is the capital of France and has famous landmarks",
+    "hallucination_spans": [],
+    "source_model": "test_model"
+  },
+  {
+    "sample_id": "overfit_29",
+    "question_id": "q0",
+    "context": "The Eiffel Tower is in Paris. The population of France is about 67 million. Paris has many famous landmarks including the Louvre Museum and Notre-Dame Cathedral.",
+    "question": "What can you tell me about Paris?",
+    "answer": "Paris is the capital of France and has famous landmarks",
+    "hallucination_spans": [],
+    "source_model": "test_model"
+  }
+]

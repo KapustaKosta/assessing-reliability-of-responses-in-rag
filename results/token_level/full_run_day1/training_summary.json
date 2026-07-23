@@ -1,0 +1,70 @@
+{
+  "best_epoch": 3,
+  "best_metric": 0.8002960282871474,
+  "best_checkpoint": "/home/ma-user/work/assessing-reliability-of-responses-in-rag/results/token_level/full_run_day1/checkpoints/epoch_2_checkpoint.pt",
+  "training_history": [
+    {
+      "epoch": 1,
+      "metrics": {
+        "auroc": 0.9372733414959671,
+        "pr_auc": 0.816583827555614,
+        "token_accuracy": 0.7854511864653643,
+        "pos_precision": 0.4747702531456111,
+        "pos_recall": 0.9344449026885838,
+        "token_f1": 0.62963649115378,
+        "macro_f1": 0.7393105081111528,
+        "char_precision": 0.0,
+        "char_recall": 0.0,
+        "char_f1": 0.0,
+        "answer_accuracy": 0.7855064027939465,
+        "answer_macro_f1": 0.7405843013023583,
+        "unfaithful_precision": 0.6206489675516225,
+        "unfaithful_recall": 0.9179755671902269,
+        "unfaithful_f1": 0.7405843013023583,
+        "pred_pos_rate": 0.3841265460845302
+      }
+    },
+    {
+      "epoch": 2,
+      "metrics": {
+        "auroc": 0.9748926520141759,
+        "pr_auc": 0.9239142834822746,
+        "token_accuracy": 0.8681875500668836,
+        "pos_precision": 0.6018359928531822,
+        "pos_recall": 0.9592097252499067,
+        "token_f1": 0.7396156700031801,
+        "macro_f1": 0.8256873201809972,
+        "char_precision": 0.0,
+        "char_recall": 0.0,
+        "char_f1": 0.0,
+        "answer_accuracy": 0.8594295692665891,
+        "answer_macro_f1": 0.8100668501769563,
+        "unfaithful_precision": 0.737294201861131,
+        "unfaithful_recall": 0.8987783595113438,
+        "unfaithful_f1": 0.8100668501769563,
+        "pred_pos_rate": 0.31105668433620415
+      }
+    },
+    {
+      "epoch": 3,
+      "metrics": {
+        "auroc": 0.9811951626791751,
+        "pr_auc": 0.9414995705496345,
+        "token_accuracy": 0.9069148834232141,
+        "pos_precision": 0.6883761723557454,
+        "pos_recall": 0.9556746990317956,
+        "token_f1": 0.8002960282871474,
+        "macro_f1": 0.8698050787525614,
+        "char_precision": 0.0,
+        "char_recall": 0.0,
+        "char_f1": 0.0,
+        "answer_accuracy": 0.8963911525029103,
+        "answer_macro_f1": 0.8502943650126157,
+        "unfaithful_precision": 0.8206168831168831,
+        "unfaithful_recall": 0.8821989528795812,
+        "unfaithful_f1": 0.8502943650126157,
+        "pred_pos_rate": 0.27094951724983807
+      }
+    }
+  ]
+}

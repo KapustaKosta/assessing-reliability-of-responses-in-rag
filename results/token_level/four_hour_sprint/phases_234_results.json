@@ -1,0 +1,27 @@
+{
+  "phase3_source_aware_lr": {
+    "best_cv": {
+      "C": 0.01,
+      "cw": "None",
+      "acc": 0.7799300099700897
+    },
+    "n_features": 44,
+    "dev_acc": 0.7659,
+    "best_cf": 0.433,
+    "best_gt": 0.35,
+    "best_tt": 0.1,
+    "best_af": 0.5938,
+    "B": 168,
+    "C": 118
+  },
+  "phase4_frozen_head": {
+    "train_acc": 0.8937,
+    "val_acc": 0.7389,
+    "best_cf": 0.4342,
+    "best_gt": 0.35,
+    "best_tt": 0.15,
+    "best_af": 0.6316,
+    "B": 113,
+    "C": 195
+  }
+}
